@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Restaurant</string>
+    <string name="screen_title">Nearest open</string>
+    <string name="category_restaurant">Restaurant</string>
+    <string name="category_supermarket">Supermarket</string>
+    <string name="category_fuel">Fuel</string>
+</resources>
