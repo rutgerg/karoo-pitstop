@@ -40,7 +40,8 @@ private val DEFAULT_CENTER = LatLng(52.3676, 4.9041)
 
 class MainActivity : ComponentActivity() {
 
-    private val karoo by lazy { KarooClient(applicationContext) }
+    private val karoo: KarooClient
+        get() = (application as KarooRestaurantApp).karoo
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -54,11 +55,6 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-    }
-
-    override fun onDestroy() {
-        karoo.close()
-        super.onDestroy()
     }
 }
 

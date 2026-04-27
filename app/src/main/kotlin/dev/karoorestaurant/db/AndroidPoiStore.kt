@@ -30,11 +30,17 @@ class AndroidPoiStore(context: Context) : SQLiteOpenHelper(
             """.trimIndent()
         )
         db.execSQL("CREATE INDEX idx_pois_bbox ON pois(lat, lon)")
+        db.execSQL(
+            "CREATE TABLE route_fetches (route_id TEXT PRIMARY KEY, fetched_at INTEGER NOT NULL)"
+        )
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        db.execSQL("DROP TABLE IF EXISTS pois")
-        onCreate(db)
+        if (oldVersion < 2) {
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS route_fetches (route_id TEXT PRIMARY KEY, fetched_at INTEGER NOT NULL)"
+            )
+        }
     }
 
     fun upsertAll(pois: List<Poi>, fetchedAt: Instant = Instant.now()) {
@@ -63,6 +69,22 @@ class AndroidPoiStore(context: Context) : SQLiteOpenHelper(
     fun count(): Int = readableDatabase.rawQuery("SELECT COUNT(*) FROM pois", null).use {
         if (it.moveToFirst()) it.getInt(0) else 0
     }
+
+    fun recordRouteFetch(routeId: String, fetchedAt: Instant = Instant.now()) {
+        val cv = ContentValues().apply {
+            put("route_id", routeId)
+            put("fetched_at", fetchedAt.toEpochMilli())
+        }
+        writableDatabase.insertWithOnConflict(
+            "route_fetches", null, cv, SQLiteDatabase.CONFLICT_REPLACE,
+        )
+    }
+
+    fun wasRouteFetched(routeId: String): Boolean =
+        readableDatabase.rawQuery(
+            "SELECT 1 FROM route_fetches WHERE route_id = ? LIMIT 1",
+            arrayOf(routeId),
+        ).use { it.moveToFirst() }
 
     fun nearest(
         center: LatLng,
@@ -109,6 +131,6 @@ class AndroidPoiStore(context: Context) : SQLiteOpenHelper(
 
     private companion object {
         const val DB_NAME = "pois.sqlite"
-        const val DB_VERSION = 1
+        const val DB_VERSION = 2
     }
 }
