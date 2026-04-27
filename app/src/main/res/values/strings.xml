@@ -5,4 +5,9 @@
     <string name="category_restaurant">Restaurant</string>
     <string name="category_supermarket">Supermarket</string>
     <string name="category_fuel">Fuel</string>
+    <string name="state_idle">Plan a route on the Karoo to load nearby POIs.</string>
+    <string name="state_fetching">Caching corridor for %1$s…</string>
+    <string name="state_cached">%1$d POIs cached for %2$s.</string>
+    <string name="state_no_location">Waiting for GPS location…</string>
+    <string name="state_error">Couldn\'t cache POIs: %1$s</string>
 </resources>
