@@ -6,15 +6,19 @@ import dev.karoorestaurant.data.overpass.OverpassClient
 import dev.karoorestaurant.data.poi.Poi
 import dev.karoorestaurant.data.poi.PoiCategory
 import dev.karoorestaurant.data.route.LatLng
+import dev.karoorestaurant.data.route.Polyline
+import dev.karoorestaurant.data.route.Route
 import dev.karoorestaurant.db.AndroidPoiStore
 import io.hammerhead.karooext.KarooSystemService
 import io.hammerhead.karooext.models.KarooEvent
 import io.hammerhead.karooext.models.LaunchPinDrop
 import io.hammerhead.karooext.models.OnLocationChanged
+import io.hammerhead.karooext.models.OnNavigationState
 import io.hammerhead.karooext.models.Symbol
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.map
 
 class KarooClient(context: Context) {
@@ -29,6 +33,10 @@ class KarooClient(context: Context) {
 
     val locationFlow: Flow<LatLng> = consumerFlow<OnLocationChanged>()
         .map { LatLng(it.lat, it.lng) }
+
+    val routeFlow: Flow<Route?> = consumerFlow<OnNavigationState>()
+        .map { it.state.toRoute() }
+        .distinctUntilChangedBy { it?.id }
 
     fun store(): AndroidPoiStore = store
 
@@ -59,6 +67,22 @@ class KarooClient(context: Context) {
         PoiCategory.RESTAURANT -> Symbol.POI.Types.FOOD
         PoiCategory.SUPERMARKET -> Symbol.POI.Types.SHOPPING
         PoiCategory.FUEL -> Symbol.POI.Types.GAS_STATION
+    }
+
+    private fun OnNavigationState.NavigationState.toRoute(): Route? = when (this) {
+        is OnNavigationState.NavigationState.Idle -> null
+        is OnNavigationState.NavigationState.NavigatingRoute -> Route(
+            id = routePolyline.hashCode().toString(),
+            name = name,
+            polyline = Polyline.decode(routePolyline),
+            distanceMeters = routeDistance,
+        )
+        is OnNavigationState.NavigationState.NavigatingToDestination -> Route(
+            id = polyline.hashCode().toString(),
+            name = destination.name ?: "Destination",
+            polyline = Polyline.decode(polyline),
+            distanceMeters = 0.0,
+        )
     }
 
     fun close() {
