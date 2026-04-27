@@ -1,29 +1,39 @@
 # karoo-restaurant
 
-An Android app for the Hammerhead Karoo 3 that surfaces the **nearest open restaurant, supermarket, and fuel station** to your current location, and routes you there in two taps via the Karoo's built-in navigation.
+An Android app for the Hammerhead Karoo 3 that surfaces the **nearest open restaurant, supermarket, and fuel station** along a planned route, and routes you there in two taps via the Karoo's built-in navigation.
 
 ## Status
 
-- **`:app`** — Android scaffold. Three placeholder cards render; tap is wired to a `KarooClient` stub. Not yet built/installed on a device.
-- **`:data`** — Headless Kotlin/JVM module that proves the data pipeline (Overpass fetch, opening_hours filter, SQLite cache) without a Karoo. Runnable on Mac via `./gradlew :data:run`.
+- **`:app`** — Android module, route-driven UI implemented. Compose screen with four states (idle / fetching / cached / error). Validated end-to-end on a Pixel emulator. On-device verification still pending.
+- **`:data`** — Headless Kotlin/JVM module: Overpass POI fetcher, opening-hours evaluator, polyline decoder, SQLite cache. Runnable on a Mac via `./gradlew :data:run`. JUnit tests cover slicer, opening-hours, polyline.
+
+## How it works
+
+1. You plan a route on the Karoo's native navigator.
+2. `RouteWatcher` (Application-scoped) sees the route appear, samples the polyline every 2 km, queries Overpass with a 10 km buffer, and upserts ~thousands of POIs into local SQLite. Dedups on a `route_fetches` table so the same route isn't re-fetched.
+3. Mid-ride you open Restaurant. The screen shows the nearest non-closed POI per category from your current GPS position. Cards are labeled `open` or `hours unknown` per the project UX rule (Closed entries are filtered out).
+4. Tap a card → `LaunchPinDrop(Symbol.POI(...))` opens the Karoo's pin Activity → tap **Navigate** to start turn-by-turn.
 
 ## Project shape
 
 ```
 karoo_restaurant/
-├── app/                                     — Android module (Karoo target)
+├── app/                                              — Android module
 │   └── src/main/kotlin/dev/karoorestaurant/
-│       ├── MainActivity.kt                  three-card screen
-│       ├── KarooClient.kt                   wraps KarooSystemService (stub)
-│       ├── poi/                             stubs; real impl lives in :data
-│       └── ui/                              PoiCard, Theme
-├── data/                                    — Kotlin/JVM module (headless prototype)
+│       ├── KarooRestaurantApp.kt                     Application; owns singleton KarooClient + RouteWatcher
+│       ├── KarooClient.kt                            wraps KarooSystemService, exposes locationFlow + routeFlow
+│       ├── RouteWatcher.kt                           collects routeFlow, prefetches corridor, exposes RouteFetchState
+│       ├── MainActivity.kt                           Compose screen for the four route-fetch states
+│       ├── PoiNearby.kt                              UI display model
+│       ├── db/AndroidPoiStore.kt                     SQLiteOpenHelper, pois + route_fetches tables
+│       └── ui/{PoiCard, Theme}.kt
+├── data/                                             — Kotlin/JVM module
 │   └── src/main/kotlin/dev/karoorestaurant/data/
-│       ├── Main.kt                          CLI entry — fetch + cache + query
-│       ├── route/{LatLng, CorridorSlicer}.kt
+│       ├── Main.kt                                   CLI runner
+│       ├── route/{LatLng, Geo, CorridorSlicer, Polyline, Route}.kt
 │       ├── poi/{Poi, PoiCategory, OpeningHours}.kt
 │       ├── overpass/{OverpassClient, OverpassResponse}.kt
-│       └── store/PoiStore.kt                JDBC SQLite
+│       └── store/PoiStore.kt                         JDBC SQLite for the headless prototype
 ├── build.gradle.kts
 ├── settings.gradle.kts
 └── gradle/wrapper/gradle-wrapper.properties
@@ -34,12 +44,12 @@ The Android app uses the consumer-side `KarooSystemService` from a regular Activ
 ## Prerequisites
 
 - Android Studio Koala (or newer) — manages the JDK, gradle wrapper, AGP.
-- A Karoo 3 with USB-debugging enabled (Settings → System → About → tap build number 7×, then enable USB debugging in Developer options).
+- A Karoo 3 with USB-debugging enabled: Settings → System → About → tap build number 7× → enable USB debugging in Developer options.
 - A GitHub Personal Access Token with the `read:packages` scope. The `karoo-ext` SDK is published only to GitHub Packages, which **requires authentication even for public reads**.
 
 ## Setup
 
-1. Create a PAT: github.com/settings/tokens → Fine-grained or classic, scope `read:packages`.
+1. Create a PAT at github.com/settings/tokens → **Generate new token (classic)** → scope **`read:packages`** only.
 2. Add credentials to `~/.gradle/gradle.properties` (NOT to the repo):
 
    ```properties
@@ -48,18 +58,22 @@ The Android app uses the consumer-side `KarooSystemService` from a regular Activ
    ```
 
    Or export `GITHUB_USERNAME` / `GITHUB_TOKEN` in your shell.
+3. Open the project folder in Android Studio. Let it sync gradle. First sync downloads `karoo-ext` from GitHub Packages — if it 401s, your PAT is wrong or missing the `read:packages` scope.
 
-3. Open the `karoo_restaurant` folder in Android Studio. It will detect the missing `gradle-wrapper.jar` and offer to generate it — accept. Alternatively run `gradle wrapper` once if you have a system gradle.
-4. Sync gradle. First sync downloads `karoo-ext` from GitHub Packages — if this fails, your PAT is wrong or missing the `read:packages` scope.
-
-## Build & sideload
+## Build & sideload to Karoo
 
 ```bash
 ./gradlew :app:assembleDebug
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
-Then launch "Restaurant" from the Karoo app drawer (swipe down → All apps).
+Then launch **Restaurant** from the Karoo app drawer (swipe down → All apps).
+
+For a quicker turnaround during development, run from Studio: select the **app** run config, plug in the Karoo, click ▶︎.
+
+## Run on the Pixel emulator
+
+The app installs and launches on a stock Pixel 7 emulator. Without a Karoo OS the SDK can't bind, so `routeFlow` and `locationFlow` never emit — the UI sits on the Idle state ("Plan a route on the Karoo to load nearby POIs"). Useful for verifying the Idle state renders cleanly; not useful for the live cycle.
 
 ## Run the data prototype (no Karoo needed)
 
@@ -67,42 +81,42 @@ Then launch "Restaurant" from the Karoo app drawer (swipe down → All apps).
 ./gradlew :data:run
 ```
 
-This:
-1. Resamples a hard-coded Amsterdam→Haarlem→IJmuiden→Amsterdam loop (~80 km) to one point per 2 km.
-2. POSTs a single Overpass query covering all sample points within a 10 km buffer.
-3. Maps results to `Poi` records, dedupes, upserts into `pois.sqlite`.
-4. Queries the local DB for the nearest open POI in each category, evaluating `opening_hours` against `LocalDateTime.now()`.
-5. Prints totals, per-category counts, the nearest-open pick per category, and the `opening_hours` tag coverage rate.
+Resamples a hard-coded Amsterdam → Haarlem → IJmuiden loop, fetches POIs from Overpass, persists to `pois.sqlite`, prints per-category counts, the nearest non-closed pick per category, and the `opening_hours` coverage rate. The same data layer is wired into `:app` via the `Polyline`, `OverpassClient`, and `OpeningHours` types.
 
 CLI flags (all optional):
+
 - `--db=path.sqlite` — DB file, default `pois.sqlite`
 - `--step=2000` — resampling step in metres
 - `--radius=10000` — Overpass `around:` radius in metres
+- `--refetch` — force a fresh fetch even if the DB is non-empty
 
 Tests: `./gradlew :data:test`.
 
-The data module **never imports Android** — it's a pure JVM library plus a `main()`. Once verified, the Android app will depend on `:data` directly.
+## Troubleshooting
 
-### What this proves
-- Overpass returns real, parseable data for your riding region.
-- `opening_hours` coverage rate is high enough to be useful (the printed percentage is the load-bearing metric — if it's < 30%, the whole feature concept is in trouble).
-- SQLite cache layout works for the bbox+haversine "nearest open" query pattern.
-- Custom opening_hours evaluator handles the common 80% (24/7, weekday + time-span lists, multi-rule overrides). PH, date ranges, sunset/sunrise, week numbers fall through to `Unknown`.
+**`401 Unauthorized` when resolving `io.hammerhead:karoo-ext`** — the PAT in `~/.gradle/gradle.properties` is missing the `read:packages` scope, or you edited a different token than the one in the file. Verify with:
 
-## What works right now in :app
+```bash
+TOKEN=$(grep '^gpr.key=' ~/.gradle/gradle.properties | cut -d= -f2-)
+curl -sI -u "rutgerg:$TOKEN" https://api.github.com/user | grep -i x-oauth-scopes
+```
 
-- App launches from drawer.
-- Three placeholder cards render: Café Luz / Albert Heijn / Shell.
-- Tap on a card calls `KarooClient.navigateTo(poi)` which logs to logcat (`adb logcat -s KarooClient`). No actual navigation yet.
+You should see `read:packages` in the listed scopes.
 
-## Next milestones
+**App opens on the Karoo but stays on the empty state** — no route is currently loaded. The watcher only fires on `OnNavigationState.NavigatingRoute` / `NavigatingToDestination`. Plan a route first, then re-open the app.
 
-1. **Verify :app on a Karoo 3** — sideload the scaffold and confirm install + launch + tap-logs round-trip.
-2. **Wire :data into :app** — replace the in-app stubs with module dependency on `:data`; replace placeholders with live SQLite query.
-3. **Route-load watcher** — bind `KarooSystemService`, subscribe to navigation-state, prefetch corridor on route load.
-4. **Real navigation dispatch** — `KarooClient.navigateTo` dispatches `LaunchPinDrop(Symbol.POI(...))` to open the Karoo's pin Activity; user confirms with one more tap.
+**Cards show "Waiting for GPS location…"** — the Karoo's GPS hasn't acquired a fix yet. Take it outside or wait. On the Pixel emulator this is permanent because there's no Karoo OS to emit `OnLocationChanged`.
+
+**Fetch fails with `Couldn't cache POIs`** — usually the tethered phone isn't reachable. Verify the Karoo says "Connected" in the phone-connection settings. Also check Overpass status (`https://overpass-api.de/api/status`) for rate-limit hits.
+
+**`stableIds.txt: Operation not permitted` or "file located outside root directory"** — gradle has a stale path cache. Run `./gradlew clean`, delete any stale `.idea/` at old project locations, then **File → Invalidate Caches and Restart** in Studio.
 
 ## Known constraints (from `karoo-ext` 1.1.8)
 
 - The Karoo's home/launcher screen is not extensible by third parties — this is an Activity in the app drawer, not a homescreen tile.
-- Internet access on the Karoo 3 requires a tethered phone (Bluetooth or WiFi); no SIM. Plan for momentary dropouts.
+- Internet access on the Karoo 3 requires a tethered phone (Bluetooth or WiFi); no SIM. Routes are prefetched while tethered, then served from the local SQLite cache for the rest of the ride.
+- `karoo-ext` 1.1.8 is published only to GitHub Packages with mandatory PAT auth. No JitPack / Maven Central mirror.
+
+## What's next (post-v0.1.0)
+
+The v0.2 backlog covers: app-icon polish, chunked Overpass queries for routes >80 km, settings screen (radius, category priority), additional categories (bar, cafe, pharmacy), cache TTL with "unverified" badge for older entries, small-screen layout audit, save-favorites, and a ground-truth ride checkpoint. See the [v0.2 project board](https://github.com/users/rutgerg/projects/14) for tracked issues.
