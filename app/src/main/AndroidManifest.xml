@@ -5,6 +5,7 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
+        android:name=".KarooRestaurantApp"
         android:label="@string/app_name"
         android:icon="@android:drawable/ic_menu_compass"
         android:roundIcon="@android:drawable/ic_menu_compass"

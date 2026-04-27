@@ -47,6 +47,13 @@ class KarooClient(context: Context) {
         return pois.size
     }
 
+    suspend fun refreshAroundCorridor(samples: List<LatLng>, radiusMeters: Int = 10_000): Int {
+        val pois = overpass.fetchCorridor(samples, radiusMeters)
+        store.upsertAll(pois)
+        Log.i(TAG, "refresh corridor: ${samples.size} samples → ${pois.size} POIs")
+        return pois.size
+    }
+
     fun navigateTo(poi: Poi) {
         val pin = Symbol.POI(
             id = "osm-${poi.osmType}-${poi.osmId}",
