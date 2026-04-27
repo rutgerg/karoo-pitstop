@@ -4,24 +4,23 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -32,16 +31,15 @@ import dev.karoorestaurant.data.route.LatLng
 import dev.karoorestaurant.ui.PoiCard
 import dev.karoorestaurant.ui.RestaurantTheme
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.sample
 import kotlinx.coroutines.withContext
 import java.time.LocalDateTime
 
-private val DEFAULT_CENTER = LatLng(52.3676, 4.9041)
-
 class MainActivity : ComponentActivity() {
 
-    private val karoo: KarooClient
-        get() = (application as KarooRestaurantApp).karoo
+    private val app: KarooRestaurantApp
+        get() = application as KarooRestaurantApp
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,8 +47,9 @@ class MainActivity : ComponentActivity() {
             RestaurantTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     NearestPoiScreen(
-                        karoo = karoo,
-                        onCardTap = karoo::navigateTo,
+                        karoo = app.karoo,
+                        watcher = app.routeWatcher,
+                        onCardTap = app.karoo::navigateTo,
                     )
                 }
             }
@@ -58,24 +57,22 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@OptIn(FlowPreview::class)
 @Composable
-private fun NearestPoiScreen(karoo: KarooClient, onCardTap: (Poi) -> Unit) {
-    val scope = rememberCoroutineScope()
-    var loading by remember { mutableStateOf(false) }
-    var statusLine by remember { mutableStateOf<String?>(null) }
-    var picks by remember { mutableStateOf<List<PoiNearby>>(emptyList()) }
+private fun NearestPoiScreen(
+    karoo: KarooClient,
+    watcher: RouteWatcher,
+    onCardTap: (Poi) -> Unit,
+) {
+    val routeState by watcher.state.collectAsState()
+    val sampledLocation = remember(karoo) { karoo.locationFlow.sample(LOCATION_SAMPLE_MS) }
+    val location by sampledLocation.collectAsState(initial = null)
 
-    suspend fun loadPicks() {
-        picks = withContext(Dispatchers.IO) { computePicks(karoo) }
-    }
-
-    LaunchedEffect(Unit) {
-        val cached = withContext(Dispatchers.IO) { karoo.store().count() }
-        if (cached == 0) {
-            statusLine = "Cache empty — tap Fetch to load POIs."
+    val picks by produceState<List<PoiNearby>>(initialValue = emptyList(), routeState, location) {
+        value = if (routeState is RouteFetchState.Cached && location != null) {
+            withContext(Dispatchers.IO) { computePicks(karoo, location!!) }
         } else {
-            statusLine = "$cached POIs cached."
-            loadPicks()
+            emptyList()
         }
     }
 
@@ -91,46 +88,81 @@ private fun NearestPoiScreen(karoo: KarooClient, onCardTap: (Poi) -> Unit) {
             style = MaterialTheme.typography.headlineSmall,
         )
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Button(
-                onClick = {
-                    scope.launch {
-                        loading = true
-                        statusLine = "Fetching…"
-                        try {
-                            val n = withContext(Dispatchers.IO) { karoo.refreshAround(DEFAULT_CENTER) }
-                            statusLine = "Fetched $n POIs."
-                            loadPicks()
-                        } catch (t: Throwable) {
-                            statusLine = "Fetch failed: ${t.message}"
-                        } finally {
-                            loading = false
-                        }
-                    }
-                },
-                enabled = !loading,
-            ) { Text(if (loading) "Loading…" else "Fetch") }
+        when (val state = routeState) {
+            RouteFetchState.Idle -> EmptyState()
+            is RouteFetchState.Fetching -> FetchingState(state.routeName)
+            is RouteFetchState.Cached -> CachedState(state, location, picks, onCardTap)
+            is RouteFetchState.Error -> ErrorState(state.message)
         }
+    }
+}
 
-        statusLine?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+@Composable
+private fun EmptyState() {
+    Text(
+        stringResource(R.string.state_idle),
+        style = MaterialTheme.typography.bodyMedium,
+    )
+}
 
+@Composable
+private fun FetchingState(routeName: String) {
+    Box(modifier = Modifier.fillMaxSize().padding(top = 24.dp), contentAlignment = Alignment.TopCenter) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            CircularProgressIndicator(modifier = Modifier.size(32.dp))
+            Text(
+                stringResource(R.string.state_fetching, routeName),
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        }
+    }
+}
+
+@Composable
+private fun CachedState(
+    state: RouteFetchState.Cached,
+    location: LatLng?,
+    picks: List<PoiNearby>,
+    onCardTap: (Poi) -> Unit,
+) {
+    Text(
+        stringResource(R.string.state_cached, state.poiCount, state.routeName),
+        style = MaterialTheme.typography.bodySmall,
+    )
+    if (location == null) {
+        Text(
+            stringResource(R.string.state_no_location),
+            style = MaterialTheme.typography.bodyMedium,
+        )
+    } else {
         picks.forEach { pn ->
             PoiCard(item = pn, onClick = { onCardTap(pn.poi) })
         }
     }
 }
 
-private fun computePicks(karoo: KarooClient): List<PoiNearby> {
+@Composable
+private fun ErrorState(message: String) {
+    Text(
+        stringResource(R.string.state_error, message),
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.error,
+    )
+}
+
+private fun computePicks(karoo: KarooClient, center: LatLng): List<PoiNearby> {
     val now = LocalDateTime.now()
     val store = karoo.store()
     return PoiCategory.values().mapNotNull { category ->
-        val candidates = store.nearest(DEFAULT_CENTER, category, maxMeters = 30_000.0, limit = 50)
+        val candidates = store.nearest(center, category, maxMeters = 30_000.0, limit = 50)
         candidates.firstNotNullOfOrNull { (poi, dist) ->
             val status = OpeningHours.evaluate(poi.openingHoursTag, now)
             if (status is OpeningHours.Status.Closed) null else PoiNearby(poi, dist, status)
         }
     }
 }
+
+private const val LOCATION_SAMPLE_MS = 30_000L
