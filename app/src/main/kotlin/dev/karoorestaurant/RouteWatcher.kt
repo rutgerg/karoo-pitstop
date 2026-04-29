@@ -3,6 +3,7 @@ package dev.karoorestaurant
 import android.util.Log
 import dev.karoorestaurant.data.route.CorridorSlicer
 import dev.karoorestaurant.data.route.Route
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -41,6 +42,8 @@ class RouteWatcher(private val karoo: KarooClient) {
             val count = karoo.refreshAroundCorridor(samples)
             karoo.store().recordRouteFetch(route.id)
             _state.value = RouteFetchState.Cached(route.name, count)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
         } catch (t: Throwable) {
             Log.e(TAG, "fetch failed for ${route.name}: ${t.message}")
             _state.value = RouteFetchState.Error(t.message ?: "Unknown error")

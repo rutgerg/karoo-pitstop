@@ -2,7 +2,7 @@ package dev.karoorestaurant
 
 import android.content.Context
 import android.util.Log
-import dev.karoorestaurant.data.overpass.OverpassClient
+import dev.karoorestaurant.data.overpass.OverpassFetcher
 import dev.karoorestaurant.data.poi.Poi
 import dev.karoorestaurant.data.poi.PoiCategory
 import dev.karoorestaurant.data.route.LatLng
@@ -25,7 +25,7 @@ class KarooClient(context: Context) {
 
     private val karooSystem = KarooSystemService(context.applicationContext)
     private val store = AndroidPoiStore(context.applicationContext)
-    private val overpass = OverpassClient()
+    private val overpass: OverpassFetcher = KarooOverpassFetcher(karooSystem)
 
     init {
         karooSystem.connect { connected -> Log.i(TAG, "KarooSystem connected=$connected") }
