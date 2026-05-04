@@ -1,6 +1,5 @@
 package dev.karoorestaurant
 
-import android.content.Context
 import android.util.Log
 import dev.karoorestaurant.data.overpass.OverpassClient
 import dev.karoorestaurant.data.poi.Poi
@@ -8,11 +7,8 @@ import dev.karoorestaurant.data.poi.PoiCategory
 import dev.karoorestaurant.data.route.LatLng
 import dev.karoorestaurant.data.route.Polyline
 import dev.karoorestaurant.data.route.Route
-import dev.karoorestaurant.db.AndroidPoiStore
-import io.hammerhead.karooext.KarooSystemService
-import io.hammerhead.karooext.models.KarooEvent
+import dev.karoorestaurant.db.PoiStore
 import io.hammerhead.karooext.models.LaunchPinDrop
-import io.hammerhead.karooext.models.OnLocationChanged
 import io.hammerhead.karooext.models.OnNavigationState
 import io.hammerhead.karooext.models.Symbol
 import kotlinx.coroutines.channels.awaitClose
@@ -23,11 +19,13 @@ import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 
-class KarooClient(context: Context) {
+typealias OverpassFetcher = suspend (samples: List<LatLng>, radiusMeters: Int) -> List<Poi>
 
-    private val karooSystem = KarooSystemService(context.applicationContext)
-    private val store = AndroidPoiStore(context.applicationContext)
-    private val overpass = OverpassClient()
+class KarooClient(
+    private val karooSystem: KarooSystemPort,
+    private val store: PoiStore,
+    private val overpass: OverpassFetcher,
+) {
 
     init {
         karooSystem.connect { connected -> Log.i(TAG, "KarooSystem connected=$connected") }
@@ -36,30 +34,35 @@ class KarooClient(context: Context) {
     private val testLocationFlow = MutableSharedFlow<LatLng>(extraBufferCapacity = 8)
 
     val locationFlow: Flow<LatLng> = merge(
-        consumerFlow<OnLocationChanged>().map { LatLng(it.lat, it.lng) },
+        callbackFlow {
+            val id = karooSystem.observeLocations { trySend(it) }
+            awaitClose { karooSystem.removeConsumer(id) }
+        }.map { LatLng(it.lat, it.lng) },
         testLocationFlow,
     )
+
+    val routeFlow: Flow<Route?> = callbackFlow {
+        val id = karooSystem.observeNavigationStates { trySend(it) }
+        awaitClose { karooSystem.removeConsumer(id) }
+    }.map { it.state.toRoute() }
+        .distinctUntilChangedBy { it?.id }
 
     fun injectTestLocation(location: LatLng) {
         val sent = testLocationFlow.tryEmit(location)
         Log.i(TAG, "injectTestLocation $location sent=$sent")
     }
 
-    val routeFlow: Flow<Route?> = consumerFlow<OnNavigationState>()
-        .map { it.state.toRoute() }
-        .distinctUntilChangedBy { it?.id }
-
-    fun store(): AndroidPoiStore = store
+    fun store(): PoiStore = store
 
     suspend fun refreshAround(center: LatLng, radiusMeters: Int = 10_000): Int {
-        val pois = overpass.fetchCorridor(listOf(center), radiusMeters)
+        val pois = overpass(listOf(center), radiusMeters)
         store.upsertAll(pois)
         Log.i(TAG, "refresh: cached ${pois.size} POIs around $center")
         return pois.size
     }
 
     suspend fun refreshAroundCorridor(samples: List<LatLng>, radiusMeters: Int = 10_000): Int {
-        val pois = overpass.fetchCorridor(samples, radiusMeters)
+        val pois = overpass(samples, radiusMeters)
         store.upsertAll(pois)
         Log.i(TAG, "refresh corridor: ${samples.size} samples → ${pois.size} POIs")
         return pois.size
@@ -105,15 +108,12 @@ class KarooClient(context: Context) {
 
     fun close() {
         karooSystem.disconnect()
-        store.close()
-    }
-
-    private inline fun <reified T : KarooEvent> consumerFlow(): Flow<T> = callbackFlow {
-        val id = karooSystem.addConsumer<T> { trySend(it) }
-        awaitClose { karooSystem.removeConsumer(id) }
     }
 
     private companion object {
         const val TAG = "KarooClient"
     }
 }
+
+internal fun defaultOverpassFetcher(client: OverpassClient = OverpassClient()): OverpassFetcher =
+    { samples, radius -> client.fetchCorridor(samples, radius) }

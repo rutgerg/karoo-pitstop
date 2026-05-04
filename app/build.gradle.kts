@@ -41,6 +41,11 @@ android {
     }
 
     sourceSets["main"].java.srcDirs("src/main/kotlin")
+    sourceSets["test"].java.srcDirs("src/test/kotlin")
+
+    testOptions {
+        unitTests.isReturnDefaultValues = true
+    }
 }
 
 dependencies {
@@ -68,4 +73,12 @@ dependencies {
     implementation("ch.poole:OpeningHoursParser:0.28.2")
 
     debugImplementation("androidx.compose.ui:ui-tooling")
+
+    testImplementation("org.junit.jupiter:junit-jupiter:5.11.0")
+    testImplementation("org.jetbrains.kotlin:kotlin-test")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
+}
+
+tasks.withType<Test>().configureEach {
+    useJUnitPlatform()
 }
