@@ -46,7 +46,7 @@ class RouteWatcherTest {
         val port = FakeKarooSystemPort()
         val store = InMemoryPoiStore()
         var fetchCount = 0
-        val client = KarooClient(port, store, overpass = { _, _ ->
+        val client = KarooClient(port, store, overpass = { _, _, _ ->
             fetchCount++
             fixturePois
         })
@@ -65,7 +65,7 @@ class RouteWatcherTest {
     fun `records route fetch in dedup table`() = runTest {
         val port = FakeKarooSystemPort()
         val store = InMemoryPoiStore()
-        val client = KarooClient(port, store, overpass = { _, _ -> fixturePois })
+        val client = KarooClient(port, store, overpass = { _, _, _ -> fixturePois })
         val watcherScope = CoroutineScope(SupervisorJob() + UnconfinedTestDispatcher(testScheduler))
         RouteWatcher(client, scope = watcherScope).start()
 
@@ -82,7 +82,7 @@ class RouteWatcherTest {
         val port = FakeKarooSystemPort()
         val store = InMemoryPoiStore()
         var fetchCount = 0
-        val client = KarooClient(port, store, overpass = { _, _ ->
+        val client = KarooClient(port, store, overpass = { _, _, _ ->
             fetchCount++
             fixturePois
         })
@@ -108,7 +108,7 @@ class RouteWatcherTest {
         val port = FakeKarooSystemPort()
         val store = InMemoryPoiStore()
         var fetchCount = 0
-        val client = KarooClient(port, store, overpass = { _, _ ->
+        val client = KarooClient(port, store, overpass = { _, _, _ ->
             fetchCount++
             if (fetchCount == 1) error("simulated network failure")
             fixturePois
@@ -134,7 +134,7 @@ class RouteWatcherTest {
         val port = FakeKarooSystemPort()
         val store = InMemoryPoiStore()
         var fetchCount = 0
-        val client = KarooClient(port, store, overpass = { _, _ ->
+        val client = KarooClient(port, store, overpass = { _, _, _ ->
             fetchCount++
             error("always fails")
         })
@@ -165,7 +165,7 @@ class RouteWatcherTest {
         val port = FakeKarooSystemPort()
         val store = InMemoryPoiStore()
         var fetchCount = 0
-        val client = KarooClient(port, store, overpass = { _, _ ->
+        val client = KarooClient(port, store, overpass = { _, _, _ ->
             fetchCount++
             if (fetchCount == 1) error("simulated failure") else fixturePois
         })
@@ -192,7 +192,7 @@ class RouteWatcherTest {
         val port = FakeKarooSystemPort()
         val store = InMemoryPoiStore()
         var fetchCount = 0
-        val client = KarooClient(port, store, overpass = { _, _ ->
+        val client = KarooClient(port, store, overpass = { _, _, _ ->
             fetchCount++
             fixturePois
         })

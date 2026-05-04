@@ -12,6 +12,19 @@ enum class PoiCategory(val label: String) {
     ATM("ATM");
 
     companion object {
+        fun fromFlag(value: String): PoiCategory? = when (value.trim().lowercase()) {
+            "restaurant" -> RESTAURANT
+            "supermarket" -> SUPERMARKET
+            "fuel" -> FUEL
+            "cafe", "bar" -> CAFE
+            "hotel" -> HOTEL
+            "doctor", "doctors", "clinic" -> DOCTOR
+            "pharmacy" -> PHARMACY
+            "bike", "bike_shop", "bicycle" -> BIKE_SHOP
+            "atm" -> ATM
+            else -> null
+        }
+
         fun fromTags(tags: Map<String, String>): PoiCategory? {
             val amenity = tags["amenity"]
             val shop = tags["shop"]

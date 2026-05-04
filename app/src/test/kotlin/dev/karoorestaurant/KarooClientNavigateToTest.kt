@@ -13,7 +13,7 @@ class KarooClientNavigateToTest {
     fun `dispatches LaunchPinDrop with POI coordinates`() {
         val port = FakeKarooSystemPort()
         val store = InMemoryPoiStore()
-        val client = KarooClient(port, store, overpass = { _, _ -> emptyList() })
+        val client = KarooClient(port, store, overpass = { _, _, _ -> emptyList() })
 
         val poi = Poi(
             osmType = "node",
@@ -40,7 +40,7 @@ class KarooClientNavigateToTest {
     fun `pin id encodes osm type and id`() {
         val port = FakeKarooSystemPort()
         val store = InMemoryPoiStore()
-        val client = KarooClient(port, store, overpass = { _, _ -> emptyList() })
+        val client = KarooClient(port, store, overpass = { _, _, _ -> emptyList() })
 
         val poi = Poi(
             osmType = "way",
@@ -61,7 +61,7 @@ class KarooClientNavigateToTest {
     fun `category maps to Symbol type`() {
         val port = FakeKarooSystemPort()
         val store = InMemoryPoiStore()
-        val client = KarooClient(port, store, overpass = { _, _ -> emptyList() })
+        val client = KarooClient(port, store, overpass = { _, _, _ -> emptyList() })
 
         PoiCategory.values().forEach { category ->
             val poi = Poi(

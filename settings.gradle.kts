@@ -26,6 +26,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "karoo-restaurant"
+rootProject.name = "karoo-pitstop"
 include(":app")
 include(":data")

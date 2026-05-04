@@ -39,7 +39,7 @@ class KarooOverpassFetcherTest {
         val scope = CoroutineScope(SupervisorJob() + UnconfinedTestDispatcher(testScheduler))
 
         val deferred = scope.async {
-            fetcher(listOf(listOf(LatLng(52.0, 4.0))), 1_000)
+            fetcher(listOf(listOf(LatLng(52.0, 4.0))), 1_000, null)
         }
         assertEquals(1, port.httpRequests.size)
         port.completeLatestHttp(statusCode = 200, body = restaurantOne)
@@ -60,6 +60,7 @@ class KarooOverpassFetcherTest {
             fetcher(
                 listOf(listOf(LatLng(52.0, 4.0)), listOf(LatLng(52.5, 4.0))),
                 1_000,
+                null,
             )
         }
 
@@ -81,7 +82,7 @@ class KarooOverpassFetcherTest {
         val scope = CoroutineScope(SupervisorJob() + UnconfinedTestDispatcher(testScheduler))
 
         val deferred = scope.async {
-            fetcher(listOf(listOf(LatLng(52.0, 4.0))), 1_000)
+            fetcher(listOf(listOf(LatLng(52.0, 4.0))), 1_000, null)
         }
 
         assertEquals(1, port.httpRequests.size)
@@ -105,7 +106,7 @@ class KarooOverpassFetcherTest {
 
         val deferred = scope.async {
             assertFailsWith<IllegalStateException> {
-                fetcher(listOf(listOf(LatLng(52.0, 4.0))), 1_000)
+                fetcher(listOf(listOf(LatLng(52.0, 4.0))), 1_000, null)
             }
         }
 
@@ -128,7 +129,7 @@ class KarooOverpassFetcherTest {
 
         val deferred = scope.async {
             assertFailsWith<IllegalStateException> {
-                fetcher(listOf(listOf(LatLng(52.0, 4.0))), 1_000)
+                fetcher(listOf(listOf(LatLng(52.0, 4.0))), 1_000, null)
             }
         }
 

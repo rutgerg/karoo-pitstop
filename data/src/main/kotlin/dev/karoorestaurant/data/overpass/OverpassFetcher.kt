@@ -1,6 +1,7 @@
 package dev.karoorestaurant.data.overpass
 
 import dev.karoorestaurant.data.poi.Poi
+import dev.karoorestaurant.data.poi.PoiCategory
 import dev.karoorestaurant.data.route.LatLng
 
 /**
@@ -16,7 +17,11 @@ import dev.karoorestaurant.data.route.LatLng
  *   the Karoo's tethered phone connection on a real device.
  */
 fun interface OverpassFetcher {
-    suspend operator fun invoke(windows: List<List<LatLng>>, radiusMeters: Int): List<Poi>
+    suspend operator fun invoke(
+        windows: List<List<LatLng>>,
+        radiusMeters: Int,
+        categories: Set<PoiCategory>?,
+    ): List<Poi>
 }
 
 /**
