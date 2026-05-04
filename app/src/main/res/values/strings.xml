@@ -5,6 +5,12 @@
     <string name="category_restaurant">Restaurant</string>
     <string name="category_supermarket">Supermarket</string>
     <string name="category_fuel">Fuel</string>
+    <string name="category_cafe">Cafe</string>
+    <string name="category_hotel">Hotel</string>
+    <string name="category_doctor">Doctor</string>
+    <string name="category_pharmacy">Pharmacy</string>
+    <string name="category_bike_shop">Bike Shop</string>
+    <string name="category_atm">ATM</string>
     <string name="state_idle">Plan a route on the Karoo to load nearby POIs.</string>
     <string name="state_fetching">Caching corridor for %1$s…</string>
     <string name="state_cached">%1$d POIs cached for %2$s.</string>

@@ -24,4 +24,40 @@
         description="@string/data_type_nearby_description"
         graphical="true"
         icon="@drawable/ic_fuel" />
+    <DataType
+        typeId="nearby_cafe"
+        displayName="@string/category_cafe"
+        description="@string/data_type_nearby_description"
+        graphical="true"
+        icon="@drawable/ic_cafe" />
+    <DataType
+        typeId="nearby_hotel"
+        displayName="@string/category_hotel"
+        description="@string/data_type_nearby_description"
+        graphical="true"
+        icon="@drawable/ic_hotel" />
+    <DataType
+        typeId="nearby_doctor"
+        displayName="@string/category_doctor"
+        description="@string/data_type_nearby_description"
+        graphical="true"
+        icon="@drawable/ic_doctor" />
+    <DataType
+        typeId="nearby_pharmacy"
+        displayName="@string/category_pharmacy"
+        description="@string/data_type_nearby_description"
+        graphical="true"
+        icon="@drawable/ic_pharmacy" />
+    <DataType
+        typeId="nearby_bike_shop"
+        displayName="@string/category_bike_shop"
+        description="@string/data_type_nearby_description"
+        graphical="true"
+        icon="@drawable/ic_bike_shop" />
+    <DataType
+        typeId="nearby_atm"
+        displayName="@string/category_atm"
+        description="@string/data_type_nearby_description"
+        graphical="true"
+        icon="@drawable/ic_atm" />
 </ExtensionInfo>
