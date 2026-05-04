@@ -15,4 +15,6 @@
     <string name="hours_unknown">unknown</string>
     <string name="field_waiting">Waiting for GPS…</string>
     <string name="field_none">—</string>
+    <string name="notif_cache_success">%1$d POIs cached for %2$s</string>
+    <string name="notif_cache_failure">Prefetch failed — check phone connection</string>
 </resources>
