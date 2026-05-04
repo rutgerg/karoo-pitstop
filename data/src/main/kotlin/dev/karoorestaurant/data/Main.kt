@@ -36,11 +36,13 @@ fun main(args: Array<String>) = runBlocking {
 
     val samples = CorridorSlicer.sample(SAMPLE_ROUTE, sampleStep)
     println("Sample points along corridor: ${samples.size} (every ${sampleStep.toInt()} m)")
+    val windows = CorridorSlicer.windows(SAMPLE_ROUTE, stepMeters = sampleStep)
+    println("Corridor windows: ${windows.size} (samples per window: ${windows.joinToString(",") { it.size.toString() }})")
 
     PoiStore.open(dbPath).use { store ->
         if (forceFetch || store.count() == 0) {
             println("\nFetching POIs from Overpass (radius ${radius} m)…")
-            val pois = OverpassClient().fetchCorridor(samples, radius)
+            val pois = OverpassClient().fetchCorridor(windows, radius)
             println("Returned: ${pois.size} POIs")
             store.upsertAll(pois)
         } else {

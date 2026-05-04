@@ -4,6 +4,7 @@ import android.util.Log
 import dev.karoorestaurant.data.overpass.OverpassClient
 import dev.karoorestaurant.data.poi.Poi
 import dev.karoorestaurant.data.poi.PoiCategory
+import dev.karoorestaurant.data.route.CorridorSlicer
 import dev.karoorestaurant.data.route.LatLng
 import dev.karoorestaurant.data.route.Polyline
 import dev.karoorestaurant.data.route.Route
@@ -19,7 +20,7 @@ import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 
-typealias OverpassFetcher = suspend (samples: List<LatLng>, radiusMeters: Int) -> List<Poi>
+typealias OverpassFetcher = suspend (windows: List<List<LatLng>>, radiusMeters: Int) -> List<Poi>
 
 class KarooClient(
     private val karooSystem: KarooSystemPort,
@@ -55,16 +56,21 @@ class KarooClient(
     fun store(): PoiStore = store
 
     suspend fun refreshAround(center: LatLng, radiusMeters: Int = 10_000): Int {
-        val pois = overpass(listOf(center), radiusMeters)
+        val pois = overpass(listOf(listOf(center)), radiusMeters)
         store.upsertAll(pois)
         Log.i(TAG, "refresh: cached ${pois.size} POIs around $center")
         return pois.size
     }
 
-    suspend fun refreshAroundCorridor(samples: List<LatLng>, radiusMeters: Int = 10_000): Int {
-        val pois = overpass(samples, radiusMeters)
+    suspend fun refreshAroundCorridor(polyline: List<LatLng>, radiusMeters: Int = 10_000): Int {
+        val windows = CorridorSlicer.windows(polyline)
+        if (windows.isEmpty()) {
+            Log.w(TAG, "refresh corridor: empty polyline, nothing to fetch")
+            return 0
+        }
+        val pois = overpass(windows, radiusMeters)
         store.upsertAll(pois)
-        Log.i(TAG, "refresh corridor: ${samples.size} samples → ${pois.size} POIs")
+        Log.i(TAG, "refresh corridor: ${windows.size} windows → ${pois.size} POIs")
         return pois.size
     }
 
