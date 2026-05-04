@@ -4,15 +4,15 @@ An Android app for the Hammerhead Karoo 3 that surfaces the **nearest open resta
 
 ## Status
 
-- **`:app`** — Android module, route-driven UI implemented. Compose screen with four states (idle / fetching / cached / error). Validated end-to-end on a Pixel emulator. On-device verification still pending.
-- **`:data`** — Headless Kotlin/JVM module: Overpass POI fetcher, opening-hours evaluator, polyline decoder, SQLite cache. Runnable on a Mac via `./gradlew :data:run`. JUnit tests cover slicer, opening-hours, polyline.
+- **`:app`** — Android module. Three per-category data field tiles (Restaurant / Supermarket / Fuel) registered as `KarooExtension` data types render on a ride profile page. Tap a tile to dispatch `LaunchPinDrop` and open the Karoo's pin activity. Verified end-to-end on a Karoo 3 (v0.1.0).
+- **`:data`** — Headless Kotlin/JVM module: Overpass POI fetcher, opening-hours evaluator, polyline decoder, SQLite cache. Runnable on a Mac via `./gradlew :data:run`. JUnit tests cover slicer, opening-hours, polyline. App-level tests cover `KarooClient.navigateTo` and `RouteWatcher`.
 
 ## How it works
 
 1. You plan a route on the Karoo's native navigator.
 2. `RouteWatcher` (Application-scoped) sees the route appear, samples the polyline every 2 km, queries Overpass with a 10 km buffer, and upserts ~thousands of POIs into local SQLite. Dedups on a `route_fetches` table so the same route isn't re-fetched.
-3. Mid-ride you open Restaurant. The screen shows the nearest non-closed POI per category from your current GPS position. Cards are labeled `open` or `hours unknown` per the project UX rule (Closed entries are filtered out).
-4. Tap a card → `LaunchPinDrop(Symbol.POI(...))` opens the Karoo's pin Activity → tap **Navigate** to start turn-by-turn.
+3. Three data field tiles (Restaurant / Supermarket / Fuel) on your ride profile page render the nearest non-closed POI per category, with distance, name, and the OSM `opening_hours` line. Closed entries are filtered out; Open and Unknown are both shown.
+4. Tap a tile → `LaunchPinDrop(Symbol.POI(...))` opens the Karoo's pin Activity → tap **Navigate** (replaces the active route) or **Save as POI** (bookmarks for later — no route change).
 
 ## Project shape
 
@@ -20,13 +20,24 @@ An Android app for the Hammerhead Karoo 3 that surfaces the **nearest open resta
 karoo_restaurant/
 ├── app/                                              — Android module
 │   └── src/main/kotlin/dev/karoorestaurant/
-│       ├── KarooRestaurantApp.kt                     Application; owns singleton KarooClient + RouteWatcher
-│       ├── KarooClient.kt                            wraps KarooSystemService, exposes locationFlow + routeFlow
+│       ├── KarooRestaurantApp.kt                     Application; assembles KarooClient + RouteWatcher
+│       ├── KarooClient.kt                            wraps the system port, exposes locationFlow + routeFlow + navigateTo
+│       ├── KarooSystemPort.kt                        port over KarooSystemService; production + fake share the interface
 │       ├── RouteWatcher.kt                           collects routeFlow, prefetches corridor, exposes RouteFetchState
-│       ├── MainActivity.kt                           Compose screen for the four route-fetch states
+│       ├── RestaurantExtensionService.kt             KarooExtension service; registers the three DataTypeImpl tiles
+│       ├── NearbyPoiDataType.kt                      per-category data tile rendering distance + name + opening hours
+│       ├── NearbyPicks.kt                            shared compute for tile + Activity picker
+│       ├── LaunchPoiReceiver.kt                      tile-tap broadcast → KarooClient.navigateTo
+│       ├── TestLocationReceiver.kt                   debug-only: inject a synthetic GPS location
+│       ├── SeedPoisReceiver.kt                       debug-only: populate the cache around a coordinate
+│       ├── MainActivity.kt                           Compose picker (legacy entry point; kept for emulator runs)
 │       ├── PoiNearby.kt                              UI display model
-│       ├── db/AndroidPoiStore.kt                     SQLiteOpenHelper, pois + route_fetches tables
+│       ├── db/{PoiStore,AndroidPoiStore}.kt          interface + SQLiteOpenHelper impl
 │       └── ui/{PoiCard, Theme}.kt
+│   └── src/main/res/
+│       ├── drawable/{ic_restaurant,ic_supermarket,ic_fuel}.xml
+│       ├── layout/data_field_nearby_poi.xml         RemoteViews layout for the data tile
+│       └── xml/extension_info.xml                    extension metadata read by the Karoo system
 ├── data/                                             — Kotlin/JVM module
 │   └── src/main/kotlin/dev/karoorestaurant/data/
 │       ├── Main.kt                                   CLI runner
@@ -67,7 +78,7 @@ The Android app uses the consumer-side `KarooSystemService` from a regular Activ
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
-Then launch **Restaurant** from the Karoo app drawer (swipe down → All apps).
+After install + reboot, the Karoo App Store binds the extension and its three data types appear in the Karoo Pages data-type picker. Add **Restaurant**, **Supermarket**, and **Fuel** to a ride profile page; that page is the on-device entry point. There is no app-drawer icon — see *Karoo platform constraints* below.
 
 For a quicker turnaround during development, run from Studio: select the **app** run config, plug in the Karoo, click ▶︎.
 
@@ -111,11 +122,37 @@ You should see `read:packages` in the listed scopes.
 
 **`stableIds.txt: Operation not permitted` or "file located outside root directory"** — gradle has a stale path cache. Run `./gradlew clean`, delete any stale `.idea/` at old project locations, then **File → Invalidate Caches and Restart** in Studio.
 
-## Known constraints (from `karoo-ext` 1.1.8)
+## Karoo platform constraints
 
-- The Karoo's home/launcher screen is not extensible by third parties — this is an Activity in the app drawer, not a homescreen tile.
-- Internet access on the Karoo 3 requires a tethered phone (Bluetooth or WiFi); no SIM. Routes are prefetched while tethered, then served from the local SQLite cache for the rest of the ride.
-- `karoo-ext` 1.1.8 is published only to GitHub Packages with mandatory PAT auth. No JitPack / Maven Central mirror.
+Things discovered building this extension that are not obvious from the `karoo-ext` 1.1.8 docs. Recorded here so future-you (or anyone forking this) does not re-derive them on a frustrating afternoon.
+
+### Entry points and surfaces
+- **There is no third-party app drawer on the Karoo 3.** The home screen is the Hammerhead launcher and does not enumerate activities with `LAUNCHER` intent filters. A traditional Android-style "tap an icon to launch the app" path does not exist for sideloaded apps.
+- **`KarooExtension` is an Android `Service`, not an Activity wrapper.** Registering one does not give your app a tappable icon anywhere. The only on-device surfaces it exposes are: data field tiles (`DataTypeImpl`), map overlays (`MapEffect`), bonus actions on paired controllers (`BonusAction`), and FIT-file effects.
+- **`BonusAction` requires a paired hardware controller.** It surfaces only as an assignable function on a SRAM AXS-style remote (Blip / Eagle / similar). Without one paired, `BonusAction` has no UI to bind to.
+
+### Service lifecycle
+- **The Karoo App Store starts extensions as foreground services on `BOOT_COMPLETED`.** Your `KarooExtension` subclass *must* call `startForeground(notificationId, notification)` in `onCreate()` within ~5 seconds. If it doesn't, Android ANRs the service and the App Store removes it from the registered extensions list. Symptom: your data types never appear in the Karoo Pages data-type picker and `adb logcat` shows `Context.startForegroundService() did not then call Service.startForeground()` for your package.
+- **`android:foregroundServiceType` is required on `targetSdk` 34+.** Use `dataSync` plus `<uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />` to keep the manifest valid.
+- **The Karoo system logs extension events under tag `HHApp: Extensions:`**, not under the karoo-ext SDK's `KarooExtension` tag. Filter logcat with `grep -i HHApp` if you are looking for bind/connect/disconnect events.
+
+### Connectivity
+- **Internet access requires a tethered phone** (Bluetooth or WiFi). The Karoo 3 has no SIM. Network calls fail when the phone is out of range. Prefetch corridor data while tethered, then serve from local SQLite for the rest of the ride.
+
+### Routing
+- **There is no public "add waypoint" or "insert stop" effect** in `karoo-ext` 1.1.8. The closest available effect is `LaunchPinDrop`, which opens the Karoo's pin activity giving the user **Navigate to** (replaces the active route) or **Save as POI** (bookmarks). Inserting a stop into an existing route without destroying it is not exposed to third-party extensions.
+
+### SDK distribution
+- **`karoo-ext` 1.1.8 is published only to GitHub Packages**, with mandatory PAT (`read:packages` scope) auth even for public reads. No JitPack or Maven Central mirror.
+
+### Tile rendering
+- **Data tiles use `RemoteViews`**, so layouts are limited to the subset Android exposes for cross-process inflation (`FrameLayout`, `LinearLayout`, `TextView`, `ImageView`, etc.). The Karoo Pages app does honor `setOnClickPendingIntent` on the root view (verified on hardware), so tiles can be made tappable.
+- **Hardcoded white text** on tiles is fine in practice — Karoo Pages renders data fields on dark backgrounds. There is no public theme attribute exposed to extensions to follow user theme choice.
+
+### Debug-broadcast quirks
+- **`am broadcast` on Karoo Android does not accept `--ed` (double extras).** Use `--es` (string) and parse to double in the receiver.
+- **Manifest receivers do not get implicit broadcasts in the background** (Android 8+). Scope test broadcasts to your package with `-p <pkg>` to make them explicit; otherwise they are silently dropped.
+- **`adb install -r` puts the app in stopped state.** Pass `--include-stopped-packages` to subsequent `am broadcast` calls or wake the service first via `am start-foreground-service -n <pkg>/.<Service>`.
 
 ## What's next (post-v0.1.0)
 
