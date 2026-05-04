@@ -1,7 +1,7 @@
 package dev.karoorestaurant
 
 import android.util.Log
-import dev.karoorestaurant.data.overpass.OverpassClient
+import dev.karoorestaurant.data.overpass.OverpassFetcher
 import dev.karoorestaurant.data.poi.Poi
 import dev.karoorestaurant.data.poi.PoiCategory
 import dev.karoorestaurant.data.route.CorridorSlicer
@@ -19,8 +19,6 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
-
-typealias OverpassFetcher = suspend (windows: List<List<LatLng>>, radiusMeters: Int) -> List<Poi>
 
 class KarooClient(
     private val karooSystem: KarooSystemPort,
@@ -121,5 +119,3 @@ class KarooClient(
     }
 }
 
-internal fun defaultOverpassFetcher(client: OverpassClient = OverpassClient()): OverpassFetcher =
-    { samples, radius -> client.fetchCorridor(samples, radius) }

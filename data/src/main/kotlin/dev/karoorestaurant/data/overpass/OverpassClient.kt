@@ -1,7 +1,6 @@
 package dev.karoorestaurant.data.overpass
 
 import dev.karoorestaurant.data.poi.Poi
-import dev.karoorestaurant.data.poi.PoiCategory
 import dev.karoorestaurant.data.route.LatLng
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -12,41 +11,31 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.util.concurrent.TimeUnit
 
+/**
+ * OkHttp-based [OverpassFetcher]. Used by the JVM CLI prototype (`:data:run`) and tests.
+ * On the Karoo 3 the production app uses `KarooOverpassFetcher` instead, because direct
+ * OkHttp traffic does not route through the Karoo's tethered phone bridge.
+ */
 class OverpassClient(
     private val endpoint: String = DEFAULT_ENDPOINT,
     private val http: OkHttpClient = defaultHttp(),
     private val json: Json = Json { ignoreUnknownKeys = true },
     private val maxRetries: Int = DEFAULT_MAX_RETRIES,
     private val baseBackoffMs: Long = DEFAULT_BASE_BACKOFF_MS,
-) {
+) : OverpassFetcher {
 
-    /**
-     * Fetch all POIs across [windows] sequentially and dedupe by `osm_type/osm_id`.
-     *
-     * Each window is one Overpass `around:` query. Splitting a long route over multiple
-     * windows keeps each request inside the server's per-query timeout and reduces 429s.
-     * Transient 429 responses are retried with exponential backoff up to [maxRetries].
-     */
-    suspend fun fetchCorridor(
-        windows: List<List<LatLng>>,
-        radiusMeters: Int = 10_000,
-    ): List<Poi> = withContext(Dispatchers.IO) {
-        require(windows.isNotEmpty()) { "windows must not be empty" }
-        require(windows.all { it.isNotEmpty() }) { "every window must have at least one sample" }
-
-        val seen = LinkedHashMap<String, Poi>()
-        for (window in windows) {
-            val pois = fetchWindow(window, radiusMeters)
-            for (poi in pois) {
-                seen.putIfAbsent("${poi.osmType}/${poi.osmId}", poi)
-            }
+    override suspend fun invoke(windows: List<List<LatLng>>, radiusMeters: Int): List<Poi> =
+        withContext(Dispatchers.IO) {
+            dedupAcrossWindows(windows) { samples -> fetchWindow(samples, radiusMeters) }
         }
-        seen.values.toList()
-    }
+
+    /** Backwards-compatible name for the CLI prototype; delegates to [invoke]. */
+    suspend fun fetchCorridor(windows: List<List<LatLng>>, radiusMeters: Int = 10_000): List<Poi> =
+        invoke(windows, radiusMeters)
 
     private suspend fun fetchWindow(samples: List<LatLng>, radiusMeters: Int): List<Poi> {
         val body = FormBody.Builder()
-            .add("data", buildQuery(samples, radiusMeters))
+            .add("data", OverpassQueryBuilder.build(samples, radiusMeters))
             .build()
         val request = Request.Builder()
             .url(endpoint)
@@ -62,7 +51,6 @@ class OverpassClient(
                     if (attempt >= maxRetries) {
                         error("Overpass 429 after $maxRetries retries")
                     }
-                    // Drain body before delay so the connection can be reused.
                     response.body?.close()
                 } else {
                     if (!response.isSuccessful) {
@@ -71,7 +59,7 @@ class OverpassClient(
                     val payload = response.body?.string() ?: error("empty Overpass response")
                     val parsed = json.decodeFromString(OverpassResponse.serializer(), payload)
                     return parsed.elements
-                        .mapNotNull { it.toPoi() }
+                        .mapNotNull(OverpassMapper::toPoi)
                         .distinctBy { "${it.osmType}/${it.osmId}" }
                 }
             } finally {
@@ -85,37 +73,6 @@ class OverpassClient(
     private fun backoffMs(attempt: Int): Long {
         val multiplier = 1L shl attempt.coerceAtMost(20)
         return (baseBackoffMs * multiplier).coerceAtMost(MAX_BACKOFF_MS)
-    }
-
-    private fun OverpassElement.toPoi(): Poi? {
-        val lat = effectiveLat ?: return null
-        val lon = effectiveLon ?: return null
-        val name = tags["name"] ?: return null
-        val category = PoiCategory.fromTags(tags) ?: return null
-        return Poi(
-            osmId = id,
-            osmType = type,
-            name = name,
-            category = category,
-            lat = lat,
-            lon = lon,
-            openingHoursTag = tags["opening_hours"],
-        )
-    }
-
-    private fun buildQuery(samples: List<LatLng>, radiusMeters: Int): String {
-        val coords = samples.joinToString(",") {
-            "${"%.6f".format(java.util.Locale.US, it.lat)},${"%.6f".format(java.util.Locale.US, it.lon)}"
-        }
-        return """
-            [out:json][timeout:60];
-            (
-              nwr["amenity"="restaurant"](around:$radiusMeters,$coords);
-              nwr["amenity"="fuel"](around:$radiusMeters,$coords);
-              nwr["shop"~"^(supermarket|convenience)${'$'}"](around:$radiusMeters,$coords);
-            );
-            out center tags;
-        """.trimIndent()
     }
 
     companion object {

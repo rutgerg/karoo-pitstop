@@ -13,10 +13,11 @@ class KarooRestaurantApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        val systemPort = RealKarooSystemPort(this)
         karoo = KarooClient(
-            karooSystem = RealKarooSystemPort(this),
+            karooSystem = systemPort,
             store = AndroidPoiStore(this),
-            overpass = defaultOverpassFetcher(),
+            overpass = KarooOverpassFetcher(systemPort),
         )
         routeWatcher = RouteWatcher(karoo).also { it.start() }
     }
