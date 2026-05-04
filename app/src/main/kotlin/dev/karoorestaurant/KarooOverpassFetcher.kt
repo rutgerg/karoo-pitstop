@@ -7,6 +7,7 @@ import dev.karoorestaurant.data.overpass.OverpassQueryBuilder
 import dev.karoorestaurant.data.overpass.OverpassResponse
 import dev.karoorestaurant.data.overpass.dedupAcrossWindows
 import dev.karoorestaurant.data.poi.Poi
+import dev.karoorestaurant.data.poi.PoiCategory
 import dev.karoorestaurant.data.route.LatLng
 import io.hammerhead.karooext.models.HttpResponseState
 import io.hammerhead.karooext.models.OnHttpResponse
@@ -39,11 +40,19 @@ class KarooOverpassFetcher(
     private val json: Json = Json { ignoreUnknownKeys = true },
 ) : OverpassFetcher {
 
-    override suspend fun invoke(windows: List<List<LatLng>>, radiusMeters: Int): List<Poi> =
-        dedupAcrossWindows(windows) { samples -> fetchWindow(samples, radiusMeters) }
+    override suspend fun invoke(
+        windows: List<List<LatLng>>,
+        radiusMeters: Int,
+        categories: Set<PoiCategory>?,
+    ): List<Poi> =
+        dedupAcrossWindows(windows) { samples -> fetchWindow(samples, radiusMeters, categories) }
 
-    private suspend fun fetchWindow(samples: List<LatLng>, radiusMeters: Int): List<Poi> {
-        val query = OverpassQueryBuilder.build(samples, radiusMeters)
+    private suspend fun fetchWindow(
+        samples: List<LatLng>,
+        radiusMeters: Int,
+        categories: Set<PoiCategory>?,
+    ): List<Poi> {
+        val query = OverpassQueryBuilder.build(samples, radiusMeters, categories)
         val bodyForm = "data=" + URLEncoder.encode(query, Charsets.UTF_8.name())
         val bodyBytes = bodyForm.toByteArray(Charsets.UTF_8)
         check(bodyBytes.size <= OnHttpResponse.MAX_REQUEST_SIZE) {

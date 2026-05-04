@@ -53,10 +53,14 @@ class KarooClient(
 
     fun store(): PoiStore = store
 
-    suspend fun refreshAround(center: LatLng, radiusMeters: Int = 10_000): Int {
-        val pois = overpass(listOf(listOf(center)), radiusMeters)
+    suspend fun refreshAround(
+        center: LatLng,
+        radiusMeters: Int = 10_000,
+        categories: Set<PoiCategory>? = null,
+    ): Int {
+        val pois = overpass(listOf(listOf(center)), radiusMeters, categories)
         store.upsertAll(pois)
-        Log.i(TAG, "refresh: cached ${pois.size} POIs around $center")
+        Log.i(TAG, "refresh: cached ${pois.size} POIs around $center categories=${categories ?: "all"}")
         return pois.size
     }
 
@@ -66,7 +70,7 @@ class KarooClient(
             Log.w(TAG, "refresh corridor: empty polyline, nothing to fetch")
             return 0
         }
-        val pois = overpass(windows, radiusMeters)
+        val pois = overpass(windows, radiusMeters, null)
         store.upsertAll(pois)
         Log.i(TAG, "refresh corridor: ${windows.size} windows → ${pois.size} POIs")
         return pois.size

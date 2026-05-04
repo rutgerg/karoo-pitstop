@@ -1,6 +1,7 @@
 package dev.karoorestaurant.data.overpass
 
 import dev.karoorestaurant.data.poi.Poi
+import dev.karoorestaurant.data.poi.PoiCategory
 import dev.karoorestaurant.data.route.LatLng
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -24,18 +25,26 @@ class OverpassClient(
     private val baseBackoffMs: Long = DEFAULT_BASE_BACKOFF_MS,
 ) : OverpassFetcher {
 
-    override suspend fun invoke(windows: List<List<LatLng>>, radiusMeters: Int): List<Poi> =
+    override suspend fun invoke(
+        windows: List<List<LatLng>>,
+        radiusMeters: Int,
+        categories: Set<PoiCategory>?,
+    ): List<Poi> =
         withContext(Dispatchers.IO) {
-            dedupAcrossWindows(windows) { samples -> fetchWindow(samples, radiusMeters) }
+            dedupAcrossWindows(windows) { samples -> fetchWindow(samples, radiusMeters, categories) }
         }
 
     /** Backwards-compatible name for the CLI prototype; delegates to [invoke]. */
     suspend fun fetchCorridor(windows: List<List<LatLng>>, radiusMeters: Int = 10_000): List<Poi> =
-        invoke(windows, radiusMeters)
+        invoke(windows, radiusMeters, null)
 
-    private suspend fun fetchWindow(samples: List<LatLng>, radiusMeters: Int): List<Poi> {
+    private suspend fun fetchWindow(
+        samples: List<LatLng>,
+        radiusMeters: Int,
+        categories: Set<PoiCategory>?,
+    ): List<Poi> {
         val body = FormBody.Builder()
-            .add("data", OverpassQueryBuilder.build(samples, radiusMeters))
+            .add("data", OverpassQueryBuilder.build(samples, radiusMeters, categories))
             .build()
         val request = Request.Builder()
             .url(endpoint)
