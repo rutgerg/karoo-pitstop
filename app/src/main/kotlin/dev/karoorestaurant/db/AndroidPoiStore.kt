@@ -91,16 +91,20 @@ class AndroidPoiStore(context: Context) : SQLiteOpenHelper(
         category: PoiCategory,
         maxMeters: Double,
         limit: Int,
-    ): List<Pair<Poi, Double>> {
+        now: Instant,
+        maxAgeDays: Long,
+    ): List<NearbyHit> {
         val degLat = maxMeters / 111_320.0
         val degLon = maxMeters / (111_320.0 * Math.cos(Math.toRadians(center.lat)))
+        val ageCutoffMillis = now.minusSeconds(maxAgeDays * 86_400L).toEpochMilli()
         val cursor = readableDatabase.rawQuery(
             """
-            SELECT osm_type, osm_id, name, category, lat, lon, opening_hours_tag
+            SELECT osm_type, osm_id, name, category, lat, lon, opening_hours_tag, fetched_at
             FROM pois
             WHERE category = ?
               AND lat BETWEEN ? AND ?
               AND lon BETWEEN ? AND ?
+              AND fetched_at > ?
             """.trimIndent(),
             arrayOf(
                 category.name,
@@ -108,9 +112,10 @@ class AndroidPoiStore(context: Context) : SQLiteOpenHelper(
                 (center.lat + degLat).toString(),
                 (center.lon - degLon).toString(),
                 (center.lon + degLon).toString(),
+                ageCutoffMillis.toString(),
             ),
         )
-        val out = mutableListOf<Pair<Poi, Double>>()
+        val out = mutableListOf<NearbyHit>()
         cursor.use {
             while (it.moveToNext()) {
                 val poi = Poi(
@@ -122,11 +127,12 @@ class AndroidPoiStore(context: Context) : SQLiteOpenHelper(
                     lon = it.getDouble(5),
                     openingHoursTag = it.getString(6),
                 )
+                val fetchedAt = Instant.ofEpochMilli(it.getLong(7))
                 val d = Geo.haversineMeters(center, LatLng(poi.lat, poi.lon))
-                if (d <= maxMeters) out += poi to d
+                if (d <= maxMeters) out += NearbyHit(poi, d, fetchedAt)
             }
         }
-        return out.sortedBy { it.second }.take(limit)
+        return out.sortedBy { it.distanceMeters }.take(limit)
     }
 
     private companion object {
