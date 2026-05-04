@@ -68,7 +68,7 @@ class NearbyPoiDataType(
                 val tag = pick.poi.openingHoursTag
                 if (tag.isNullOrBlank()) openLabel else "$openLabel: $tag"
             }
-            is OpeningHours.Status.Unknown -> "?"
+            is OpeningHours.Status.Unknown -> "$openLabel: ${context.getString(R.string.hours_unknown)}"
             OpeningHours.Status.Closed -> null
         }
         val unverified = if (pick.staleness == Staleness.AGING) "unverified" else null
