@@ -7,4 +7,5 @@ data class PoiNearby(
     val poi: Poi,
     val distanceMeters: Double,
     val status: OpeningHours.Status,
+    val staleness: Staleness = Staleness.NEW,
 )
