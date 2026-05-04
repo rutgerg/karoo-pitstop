@@ -40,7 +40,7 @@ class RestaurantExtensionService : KarooExtension(EXTENSION_ID, EXTENSION_VERSIO
         }
         return builder
             .setContentTitle(getString(R.string.app_name))
-            .setSmallIcon(R.drawable.ic_restaurant)
+            .setSmallIcon(R.drawable.ic_pitstop)
             .setOngoing(true)
             .build()
     }

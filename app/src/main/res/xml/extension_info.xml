@@ -2,7 +2,7 @@
 <ExtensionInfo
     id="restaurant"
     displayName="@string/app_name"
-    icon="@drawable/ic_restaurant"
+    icon="@drawable/ic_pitstop"
     scansDevices="false"
     mapLayer="false"
     fitFile="false">
