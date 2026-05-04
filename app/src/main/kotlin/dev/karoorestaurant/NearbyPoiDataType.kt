@@ -49,7 +49,7 @@ class NearbyPoiDataType(
             ?: context.getString(placeholderRes)
         views.setTextViewText(R.id.poi_text, mainText)
 
-        val hoursText = pick?.let { formatHours(it) }
+        val hoursText = pick?.let { formatHours(context, it) }
         if (hoursText.isNullOrBlank()) {
             views.setViewVisibility(R.id.poi_hours, View.GONE)
         } else {
@@ -61,9 +61,13 @@ class NearbyPoiDataType(
         return views
     }
 
-    private fun formatHours(pick: PoiNearby): String? {
+    private fun formatHours(context: Context, pick: PoiNearby): String? {
+        val openLabel = context.getString(R.string.hours_open_prefix)
         val hoursPart: String? = when (pick.status) {
-            OpeningHours.Status.Open -> pick.poi.openingHoursTag
+            OpeningHours.Status.Open -> {
+                val tag = pick.poi.openingHoursTag
+                if (tag.isNullOrBlank()) openLabel else "$openLabel: $tag"
+            }
             is OpeningHours.Status.Unknown -> "?"
             OpeningHours.Status.Closed -> null
         }
