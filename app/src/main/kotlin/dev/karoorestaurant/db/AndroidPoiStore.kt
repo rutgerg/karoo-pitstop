@@ -12,7 +12,7 @@ import java.time.Instant
 
 class AndroidPoiStore(context: Context) : SQLiteOpenHelper(
     context.applicationContext, DB_NAME, null, DB_VERSION,
-) {
+), PoiStore {
     override fun onCreate(db: SQLiteDatabase) {
         db.execSQL(
             """
@@ -43,7 +43,7 @@ class AndroidPoiStore(context: Context) : SQLiteOpenHelper(
         }
     }
 
-    fun upsertAll(pois: List<Poi>, fetchedAt: Instant = Instant.now()) {
+    override fun upsertAll(pois: List<Poi>, fetchedAt: Instant) {
         val db = writableDatabase
         db.beginTransaction()
         try {
@@ -66,11 +66,11 @@ class AndroidPoiStore(context: Context) : SQLiteOpenHelper(
         }
     }
 
-    fun count(): Int = readableDatabase.rawQuery("SELECT COUNT(*) FROM pois", null).use {
+    override fun count(): Int = readableDatabase.rawQuery("SELECT COUNT(*) FROM pois", null).use {
         if (it.moveToFirst()) it.getInt(0) else 0
     }
 
-    fun recordRouteFetch(routeId: String, fetchedAt: Instant = Instant.now()) {
+    override fun recordRouteFetch(routeId: String, fetchedAt: Instant) {
         val cv = ContentValues().apply {
             put("route_id", routeId)
             put("fetched_at", fetchedAt.toEpochMilli())
@@ -80,17 +80,17 @@ class AndroidPoiStore(context: Context) : SQLiteOpenHelper(
         )
     }
 
-    fun wasRouteFetched(routeId: String): Boolean =
+    override fun wasRouteFetched(routeId: String): Boolean =
         readableDatabase.rawQuery(
             "SELECT 1 FROM route_fetches WHERE route_id = ? LIMIT 1",
             arrayOf(routeId),
         ).use { it.moveToFirst() }
 
-    fun nearest(
+    override fun nearest(
         center: LatLng,
         category: PoiCategory,
-        maxMeters: Double = 30_000.0,
-        limit: Int = 25,
+        maxMeters: Double,
+        limit: Int,
     ): List<Pair<Poi, Double>> {
         val degLat = maxMeters / 111_320.0
         val degLon = maxMeters / (111_320.0 * Math.cos(Math.toRadians(center.lat)))

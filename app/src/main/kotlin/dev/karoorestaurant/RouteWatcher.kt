@@ -12,9 +12,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
-class RouteWatcher(private val karoo: KarooClient) {
+class RouteWatcher(
+    private val karoo: KarooClient,
+    private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO),
+) {
 
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val _state = MutableStateFlow<RouteFetchState>(RouteFetchState.Idle)
     val state: StateFlow<RouteFetchState> = _state.asStateFlow()
 

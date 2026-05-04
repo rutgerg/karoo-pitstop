@@ -1,6 +1,7 @@
 package dev.karoorestaurant
 
 import android.app.Application
+import dev.karoorestaurant.db.AndroidPoiStore
 
 class KarooRestaurantApp : Application() {
 
@@ -12,7 +13,11 @@ class KarooRestaurantApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        karoo = KarooClient(this)
+        karoo = KarooClient(
+            karooSystem = RealKarooSystemPort(this),
+            store = AndroidPoiStore(this),
+            overpass = defaultOverpassFetcher(),
+        )
         routeWatcher = RouteWatcher(karoo).also { it.start() }
     }
 }
