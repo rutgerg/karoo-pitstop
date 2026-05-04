@@ -20,5 +20,12 @@ class KarooRestaurantApp : Application() {
             overpass = KarooOverpassFetcher(systemPort),
         )
         routeWatcher = RouteWatcher(karoo).also { it.start() }
+
+        CacheStateNotifier(
+            systemPort = systemPort,
+            header = getString(R.string.app_name),
+            successFormat = { count, name -> getString(R.string.notif_cache_success, count, name) },
+            failureMessage = getString(R.string.notif_cache_failure),
+        ).observe(routeWatcher.state)
     }
 }
