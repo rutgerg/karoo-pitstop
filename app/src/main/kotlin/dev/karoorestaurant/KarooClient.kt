@@ -92,6 +92,12 @@ class KarooClient(
         PoiCategory.RESTAURANT -> Symbol.POI.Types.FOOD
         PoiCategory.SUPERMARKET -> Symbol.POI.Types.SHOPPING
         PoiCategory.FUEL -> Symbol.POI.Types.GAS_STATION
+        PoiCategory.CAFE -> Symbol.POI.Types.COFFEE
+        PoiCategory.HOTEL -> Symbol.POI.Types.LODGING
+        PoiCategory.DOCTOR -> Symbol.POI.Types.HOSPITAL
+        PoiCategory.PHARMACY -> Symbol.POI.Types.FIRST_AID
+        PoiCategory.BIKE_SHOP -> Symbol.POI.Types.BIKE_SHOP
+        PoiCategory.ATM -> Symbol.POI.Types.ATM
     }
 
     private fun OnNavigationState.NavigationState.toRoute(): Route? = when (this) {

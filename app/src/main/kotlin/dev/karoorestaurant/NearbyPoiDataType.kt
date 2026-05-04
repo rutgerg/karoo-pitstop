@@ -100,6 +100,12 @@ class NearbyPoiDataType(
         const val TYPE_RESTAURANT = "nearby_restaurant"
         const val TYPE_SUPERMARKET = "nearby_supermarket"
         const val TYPE_FUEL = "nearby_fuel"
+        const val TYPE_CAFE = "nearby_cafe"
+        const val TYPE_HOTEL = "nearby_hotel"
+        const val TYPE_DOCTOR = "nearby_doctor"
+        const val TYPE_PHARMACY = "nearby_pharmacy"
+        const val TYPE_BIKE_SHOP = "nearby_bike_shop"
+        const val TYPE_ATM = "nearby_atm"
         private const val SAMPLE_MS = 10_000L
     }
 }
