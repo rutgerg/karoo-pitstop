@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ExtensionInfo
+    id="restaurant"
+    displayName="@string/app_name"
+    icon="@drawable/ic_restaurant"
+    scansDevices="false"
+    mapLayer="false"
+    fitFile="false">
+    <DataType
+        typeId="nearby_restaurant"
+        displayName="@string/category_restaurant"
+        description="@string/data_type_nearby_description"
+        graphical="true"
+        icon="@drawable/ic_restaurant" />
+    <DataType
+        typeId="nearby_supermarket"
+        displayName="@string/category_supermarket"
+        description="@string/data_type_nearby_description"
+        graphical="true"
+        icon="@drawable/ic_supermarket" />
+    <DataType
+        typeId="nearby_fuel"
+        displayName="@string/category_fuel"
+        description="@string/data_type_nearby_description"
+        graphical="true"
+        icon="@drawable/ic_fuel" />
+</ExtensionInfo>
