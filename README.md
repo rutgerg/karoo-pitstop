@@ -1,6 +1,6 @@
 # karoo-restaurant
 
-An Android app for the Hammerhead Karoo 3 that surfaces the **nearest open restaurant, supermarket, and fuel station** along a planned route, and routes you there in two taps via the Karoo's built-in navigation.
+**Pitstop** is an Android app for the Hammerhead Karoo 3 that surfaces the **nearest open restaurant, supermarket, and fuel station** along a planned route, and routes you there in two taps via the Karoo's built-in navigation.
 
 <p align="center">
   <img src="docs/screenshot-karoo-tiles.png" alt="Three nearby-POI data tiles on a Karoo 3 ride profile page" width="280" />
@@ -82,7 +82,7 @@ The Android app uses the consumer-side `KarooSystemService` from a regular Activ
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
-After install + reboot, the Karoo App Store binds the extension and its three data types appear in the Karoo Pages data-type picker. Add **Restaurant**, **Supermarket**, and **Fuel** to a ride profile page; that page is the on-device entry point. There is no app-drawer icon — see *Karoo platform constraints* below.
+After install + reboot, the Karoo App Store binds the extension as **Pitstop** and its three data types appear in the Karoo Pages data-type picker. Add **Restaurant**, **Supermarket**, and **Fuel** to a ride profile page; that page is the on-device entry point. There is no app-drawer icon — see *Karoo platform constraints* below.
 
 For a quicker turnaround during development, run from Studio: select the **app** run config, plug in the Karoo, click ▶︎.
 
