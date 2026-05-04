@@ -1,25 +1,65 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:name=".KarooRestaurantApp"
         android:label="@string/app_name"
-        android:icon="@android:drawable/ic_menu_compass"
-        android:roundIcon="@android:drawable/ic_menu_compass"
+        android:icon="@drawable/ic_restaurant"
+        android:roundIcon="@drawable/ic_restaurant"
         android:theme="@style/Theme.KarooRestaurant"
         android:allowBackup="false">
 
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:label="@string/app_name">
+            android:label="@string/app_name"
+            android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <receiver
+            android:name=".LaunchPoiReceiver"
+            android:exported="false" />
+
+        <receiver
+            android:name=".TestLocationReceiver"
+            android:exported="true"
+            tools:ignore="ExportedReceiver">
+            <intent-filter>
+                <action android:name="dev.karoorestaurant.TEST_LOCATION" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name=".SeedPoisReceiver"
+            android:exported="true"
+            tools:ignore="ExportedReceiver">
+            <intent-filter>
+                <action android:name="dev.karoorestaurant.SEED_POIS" />
+            </intent-filter>
+        </receiver>
+
+        <service
+            android:name=".RestaurantExtensionService"
+            android:exported="true"
+            android:foregroundServiceType="dataSync"
+            tools:ignore="ExportedService">
+            <intent-filter>
+                <action android:name="io.hammerhead.karooext.KAROO_EXTENSION" />
+            </intent-filter>
+            <meta-data
+                android:name="io.hammerhead.karooext.EXTENSION_INFO"
+                android:resource="@xml/extension_info" />
+        </service>
     </application>
 </manifest>

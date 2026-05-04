@@ -70,7 +70,7 @@ private fun NearestPoiScreen(
 
     val picks by produceState<List<PoiNearby>>(initialValue = emptyList(), routeState, location) {
         value = if (routeState is RouteFetchState.Cached && location != null) {
-            withContext(Dispatchers.IO) { computePicks(karoo, location!!) }
+            withContext(Dispatchers.IO) { computeNearbyPicks(karoo, location!!) }
         } else {
             emptyList()
         }
@@ -151,18 +151,6 @@ private fun ErrorState(message: String) {
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.error,
     )
-}
-
-private fun computePicks(karoo: KarooClient, center: LatLng): List<PoiNearby> {
-    val now = LocalDateTime.now()
-    val store = karoo.store()
-    return PoiCategory.values().mapNotNull { category ->
-        val candidates = store.nearest(center, category, maxMeters = 30_000.0, limit = 50)
-        candidates.firstNotNullOfOrNull { (poi, dist) ->
-            val status = OpeningHours.evaluate(poi.openingHoursTag, now)
-            if (status is OpeningHours.Status.Closed) null else PoiNearby(poi, dist, status)
-        }
-    }
 }
 
 private const val LOCATION_SAMPLE_MS = 30_000L

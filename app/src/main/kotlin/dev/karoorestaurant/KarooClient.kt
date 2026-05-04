@@ -17,9 +17,11 @@ import io.hammerhead.karooext.models.OnNavigationState
 import io.hammerhead.karooext.models.Symbol
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
 
 class KarooClient(context: Context) {
 
@@ -31,8 +33,17 @@ class KarooClient(context: Context) {
         karooSystem.connect { connected -> Log.i(TAG, "KarooSystem connected=$connected") }
     }
 
-    val locationFlow: Flow<LatLng> = consumerFlow<OnLocationChanged>()
-        .map { LatLng(it.lat, it.lng) }
+    private val testLocationFlow = MutableSharedFlow<LatLng>(extraBufferCapacity = 8)
+
+    val locationFlow: Flow<LatLng> = merge(
+        consumerFlow<OnLocationChanged>().map { LatLng(it.lat, it.lng) },
+        testLocationFlow,
+    )
+
+    fun injectTestLocation(location: LatLng) {
+        val sent = testLocationFlow.tryEmit(location)
+        Log.i(TAG, "injectTestLocation $location sent=$sent")
+    }
 
     val routeFlow: Flow<Route?> = consumerFlow<OnNavigationState>()
         .map { it.state.toRoute() }
