@@ -11,8 +11,8 @@
     <application
         android:name=".KarooRestaurantApp"
         android:label="@string/app_name"
-        android:icon="@drawable/ic_restaurant"
-        android:roundIcon="@drawable/ic_restaurant"
+        android:icon="@drawable/ic_pitstop"
+        android:roundIcon="@drawable/ic_pitstop"
         android:theme="@style/Theme.KarooRestaurant"
         android:allowBackup="false">
 
