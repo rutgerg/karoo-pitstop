@@ -1,7 +1,6 @@
 package dev.karoorestaurant
 
 import android.util.Log
-import dev.karoorestaurant.data.route.CorridorSlicer
 import dev.karoorestaurant.data.route.Route
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -39,8 +38,7 @@ class RouteWatcher(
         _state.value = RouteFetchState.Fetching(route.name)
         Log.i(TAG, "fetching corridor for ${route.name}")
         try {
-            val samples = CorridorSlicer.sample(route.polyline)
-            val count = karoo.refreshAroundCorridor(samples)
+            val count = karoo.refreshAroundCorridor(route.polyline)
             karoo.store().recordRouteFetch(route.id)
             _state.value = RouteFetchState.Cached(route.name, count)
         } catch (t: Throwable) {
