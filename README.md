@@ -8,6 +8,23 @@ Repository: [github.com/rutgerg/karoo-pitstop](https://github.com/rutgerg/karoo-
   <img src="docs/screenshot-karoo-tiles.png" alt="Three nearby-POI data tiles on a Karoo 3 ride profile page" width="280" />
 </p>
 
+## Why Pitstop
+
+Long rides need food, water, fuel, sometimes a cash machine — and the rider does not want to fumble with a phone in a jersey pocket while moving. The Karoo handles the route, but not the question every cyclist has on hour four:
+
+- **What is open near me right now, along my route?** Stock Karoo navigation routes you, but does not surface live services.
+- **Komoot and RideWithGPS POIs are pre-trip planning artefacts.** They show what *exists*, not what is *currently open* — and they sit on a phone you cannot see while pedalling.
+- **The bar-mounted screen is the right interaction surface mid-ride.** A glance at a data tile beats fishing out gloved-hand-unfriendly hardware.
+
+## Use cases
+
+Pitstop is built for situations where the route is set but the next stop is undecided:
+
+- **Brevet / audax** — find the next open supermarket between controls without stopping to phone-check.
+- **Remote gravel** — locate a fuel station with a shop for water and snacks, often the only thing open for kilometres.
+- **Bonk recovery** — when you are crashing, the data tile shows the nearest open food source by distance, no menu diving.
+- **Unfamiliar territory** — the Karoo already has the route; let the device tell you which services line it.
+
 ## Status
 
 - **`:app`** — Android module. Three per-category data field tiles (Restaurant / Supermarket / Fuel) registered as `KarooExtension` data types render on a ride profile page. Tap a tile to dispatch `LaunchPinDrop` and open the Karoo's pin activity. Verified end-to-end on a Karoo 3 (v0.1.0).
