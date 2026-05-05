@@ -226,7 +226,7 @@ Things discovered building this extension that are not obvious from the `karoo-e
 
 ## What's next
 
-Open backlog items: app-icon polish, chunked Overpass queries for routes >80 km, settings screen (radius, category priority), cache TTL with "unverified" badge for older entries, small-screen layout audit, and save-favorites. See the [project board](https://github.com/users/rutgerg/projects/14) for tracked issues.
+Open backlog items: app-icon polish, chunked Overpass queries for routes >80 km, settings screen (radius, category priority), cache TTL with "unverified" badge for older entries, small-screen layout audit, and save-favorites. See [open issues](https://github.com/rutgerg/karoo-pitstop/issues) for the current tracker.
 
 ## License
 
