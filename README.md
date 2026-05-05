@@ -115,6 +115,7 @@ Tests: `./gradlew :data:test`.
 
 ## Documentation
 
+- [Contributing](CONTRIBUTING.md) — how to report bugs, propose features, and submit code changes
 - [Project shape](docs/project-shape.md) — module layout and file-by-file role description
 - [Releasing](docs/releasing.md) — maintainer-only workflow and release checklist
 - [Troubleshooting](docs/troubleshooting.md) — common errors and fixes (auth, GPS, fetch failures, gradle cache)
