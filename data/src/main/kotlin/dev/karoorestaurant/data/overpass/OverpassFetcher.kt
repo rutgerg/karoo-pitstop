@@ -11,10 +11,8 @@ import dev.karoorestaurant.data.route.LatLng
  * windows sequentially, dedupe across windows by `osm_type/osm_id`, and surface a
  * single failed window as a thrown error (no partial results).
  *
- * Two production-relevant implementations exist:
- * - `OverpassClient` (this module) uses OkHttp. Used by the JVM CLI prototype and tests.
- * - `KarooOverpassFetcher` (`:app`) uses the karoo-ext HTTP bridge so requests go through
- *   the Karoo's tethered phone connection on a real device.
+ * The single production implementation is `OverpassClient`, which uses OkHttp. It runs
+ * unchanged on the JVM CLI (`:data:run`), the Android app on a Karoo 3, and tests.
  */
 fun interface OverpassFetcher {
     suspend operator fun invoke(
@@ -26,7 +24,7 @@ fun interface OverpassFetcher {
 
 /**
  * Run the per-window [fetchOne] sequentially across [windows] and dedupe results by
- * `osm_type/osm_id`. Shared between `OverpassClient` and `KarooOverpassFetcher`.
+ * `osm_type/osm_id`. Used by `OverpassClient`.
  */
 suspend fun dedupAcrossWindows(
     windows: List<List<LatLng>>,

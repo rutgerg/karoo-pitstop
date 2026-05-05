@@ -124,7 +124,7 @@ You should see `read:packages` in the listed scopes.
 
 **Cards show "Waiting for GPS location…"** — the Karoo's GPS hasn't acquired a fix yet. Take it outside or wait. On the Pixel emulator this is permanent because there's no Karoo OS to emit `OnLocationChanged`.
 
-**Fetch fails with `Couldn't cache POIs`** — usually the tethered phone isn't reachable. Verify the Karoo says "Connected" in the phone-connection settings. Also check Overpass status (`https://overpass-api.de/api/status`) for rate-limit hits.
+**Fetch fails with `Couldn't cache POIs`** — the Karoo doesn't have a Wi-Fi connection. Pitstop calls Overpass over OkHttp on whichever Wi-Fi network the device is currently joined to (home Wi-Fi while charging, or a phone hotspot during a ride). Verify Wi-Fi is connected (Settings → Wi-Fi). Also check Overpass status (`https://overpass-api.de/api/status`) for rate-limit hits.
 
 **`stableIds.txt: Operation not permitted` or "file located outside root directory"** — gradle has a stale path cache. Run `./gradlew clean`, delete any stale `.idea/` at old project locations, then **File → Invalidate Caches and Restart** in Studio.
 
@@ -143,7 +143,9 @@ Things discovered building this extension that are not obvious from the `karoo-e
 - **The Karoo system logs extension events under tag `HHApp: Extensions:`**, not under the karoo-ext SDK's `KarooExtension` tag. Filter logcat with `grep -i HHApp` if you are looking for bind/connect/disconnect events.
 
 ### Connectivity
-- **Internet access requires a tethered phone** (Bluetooth or WiFi). The Karoo 3 has no SIM. Network calls fail when the phone is out of range. Prefetch corridor data while tethered, then serve from local SQLite for the rest of the ride.
+- **The Karoo 3 has Wi-Fi but no SIM, and Pitstop does not use the karoo-ext HTTP bridge.** The watch reaches the internet directly over OkHttp on whatever Wi-Fi network it is joined to — home Wi-Fi at the charging dock, or a phone hotspot during a ride. When no Wi-Fi is available, fetches fail silently and tiles render from the local SQLite cache.
+- **The karoo-ext `OnHttpResponse` bridge exists but is unsuitable for bulk POI fetches.** It relays HTTP through a paired phone's BT companion app and enforces a 100 KB request/response cap (`OnHttpResponse.MAX_REQUEST_SIZE` in `karoo-ext-1.1.8`). A typical city-density single-category Overpass response exceeds that cap, so Pitstop bypasses the bridge entirely. The bridge is designed for in-ride micro-API calls (Strava live segments, weather widgets), not bulk prefetch.
+- **The README's earlier claim that direct OkHttp cannot reach the internet on a Karoo without a SIM is wrong** when the device is on Wi-Fi. The kernel `main` routing table is empty (which is misleading from a `ip route` shell), but Android uses per-network route tables addressed by the active `Network`. Any app holding `INTERNET` permission routes via the active Wi-Fi network just like any other Android app.
 
 ### Routing
 - **There is no public "add waypoint" or "insert stop" effect** in `karoo-ext` 1.1.8. The closest available effect is `LaunchPinDrop`, which opens the Karoo's pin activity giving the user **Navigate to** (replaces the active route) or **Save as POI** (bookmarks). Inserting a stop into an existing route without destroying it is not exposed to third-party extensions.

@@ -13,9 +13,11 @@ import okhttp3.Request
 import java.util.concurrent.TimeUnit
 
 /**
- * OkHttp-based [OverpassFetcher]. Used by the JVM CLI prototype (`:data:run`) and tests.
- * On the Karoo 3 the production app uses `KarooOverpassFetcher` instead, because direct
- * OkHttp traffic does not route through the Karoo's tethered phone bridge.
+ * OkHttp-based [OverpassFetcher]. Used by the JVM CLI prototype (`:data:run`), the
+ * `:app` Android module on a Karoo 3, and unit tests. On the device this works because
+ * the Karoo connects to Wi-Fi (home or phone hotspot) and the app holds the INTERNET
+ * permission, so OkHttp routes through the active default network just like any other
+ * Android app.
  */
 class OverpassClient(
     private val endpoint: String = DEFAULT_ENDPOINT,
