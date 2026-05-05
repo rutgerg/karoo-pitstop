@@ -4,6 +4,8 @@ An Android app for the Hammerhead Karoo 3 that surfaces the **nearest open resta
 
 Repository: [github.com/rutgerg/karoo-pitstop](https://github.com/rutgerg/karoo-pitstop)
 
+> **🎉 v1.0.0 is out** — first stable release. See the [release notes](https://github.com/rutgerg/karoo-pitstop/releases/tag/v1.0.0).
+
 <p align="center">
   <img src="docs/screenshot-karoo-tiles.png" alt="Three nearby-POI data tiles on a Karoo 3 ride profile page" width="280" />
 </p>
@@ -27,7 +29,7 @@ Pitstop is built for situations where the route is set but the next stop is unde
 
 ## Status
 
-- **`:app`** — Android module. Three per-category data field tiles (Restaurant / Supermarket / Fuel) registered as `KarooExtension` data types render on a ride profile page. Tap a tile to dispatch `LaunchPinDrop` and open the Karoo's pin activity. Verified end-to-end on a Karoo 3 (v0.1.0).
+- **`:app`** — Android module. Three per-category data field tiles (Restaurant / Supermarket / Fuel) registered as `KarooExtension` data types render on a ride profile page. Tap a tile to dispatch `LaunchPinDrop` and open the Karoo's pin activity. Verified end-to-end on a Karoo 3 (v1.0.0).
 - **`:data`** — Headless Kotlin/JVM module: Overpass POI fetcher, opening-hours evaluator, polyline decoder, SQLite cache. Runnable on a Mac via `./gradlew :data:run`. JUnit tests cover slicer, opening-hours, polyline. App-level tests cover `KarooClient.navigateTo` and `RouteWatcher`.
 
 ## How it works
@@ -187,9 +189,9 @@ Things discovered building this extension that are not obvious from the `karoo-e
 - **Manifest receivers do not get implicit broadcasts in the background** (Android 8+). Scope test broadcasts to your package with `-p <pkg>` to make them explicit; otherwise they are silently dropped.
 - **`adb install -r` puts the app in stopped state.** Pass `--include-stopped-packages` to subsequent `am broadcast` calls or wake the service first via `am start-foreground-service -n <pkg>/.<Service>`.
 
-## What's next (post-v0.1.0)
+## What's next
 
-The v0.2 backlog covers: app-icon polish, chunked Overpass queries for routes >80 km, settings screen (radius, category priority), additional categories (bar, cafe, pharmacy), cache TTL with "unverified" badge for older entries, small-screen layout audit, save-favorites, and a ground-truth ride checkpoint. See the [v0.2 project board](https://github.com/users/rutgerg/projects/14) for tracked issues.
+Open backlog items: app-icon polish, chunked Overpass queries for routes >80 km, settings screen (radius, category priority), additional categories (bar, cafe, pharmacy), cache TTL with "unverified" badge for older entries, small-screen layout audit, and save-favorites. See the [project board](https://github.com/users/rutgerg/projects/14) for tracked issues.
 
 ## License
 
