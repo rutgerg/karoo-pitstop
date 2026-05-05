@@ -76,6 +76,14 @@ The Android app uses the consumer-side `KarooSystemService` from a regular Activ
 
    Or export `GITHUB_USERNAME` / `GITHUB_TOKEN` in your shell.
 3. Open the project folder in Android Studio. Let it sync gradle. First sync downloads `karoo-ext` from GitHub Packages — if it 401s, your PAT is wrong or missing the `read:packages` scope.
+4. (Optional, recommended) Install the gitleaks pre-commit hook so staged changes are scanned for secrets before every commit:
+
+   ```bash
+   brew install pre-commit gitleaks
+   pre-commit install
+   ```
+
+   Config lives in `.pre-commit-config.yaml` at the repo root.
 
 ## Build & sideload to Karoo
 
