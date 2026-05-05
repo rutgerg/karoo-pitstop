@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <application>
+
+        <receiver
+            android:name=".TestLocationReceiver"
+            android:exported="true"
+            tools:ignore="ExportedReceiver">
+            <intent-filter>
+                <action android:name="dev.karoorestaurant.TEST_LOCATION" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name=".SeedPoisReceiver"
+            android:exported="true"
+            tools:ignore="ExportedReceiver">
+            <intent-filter>
+                <action android:name="dev.karoorestaurant.SEED_POIS" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name=".HttpProbeReceiver"
+            android:exported="true"
+            tools:ignore="ExportedReceiver">
+            <intent-filter>
+                <action android:name="dev.karoorestaurant.HTTP_PROBE" />
+            </intent-filter>
+        </receiver>
+
+    </application>
+</manifest>

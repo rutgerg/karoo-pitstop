@@ -53,7 +53,7 @@ class RestaurantExtensionService : KarooExtension(EXTENSION_ID, EXTENSION_VERSIO
 
     companion object {
         const val EXTENSION_ID = "restaurant"
-        const val EXTENSION_VERSION = "0.1.0"
+        const val EXTENSION_VERSION = "1.0.0"
         private const val CHANNEL_ID = "restaurant_extension_status"
         private const val NOTIFICATION_ID = 1
     }
