@@ -7,7 +7,7 @@ import android.os.Build
 import io.hammerhead.karooext.extension.DataTypeImpl
 import io.hammerhead.karooext.extension.KarooExtension
 
-class RestaurantExtensionService : KarooExtension(EXTENSION_ID, EXTENSION_VERSION) {
+class RestaurantExtensionService : KarooExtension(EXTENSION_ID, BuildConfig.VERSION_NAME) {
 
     override val types: List<DataTypeImpl> by lazy {
         val app = application as KarooRestaurantApp
@@ -53,7 +53,6 @@ class RestaurantExtensionService : KarooExtension(EXTENSION_ID, EXTENSION_VERSIO
 
     companion object {
         const val EXTENSION_ID = "restaurant"
-        const val EXTENSION_VERSION = "1.0.1"
         private const val CHANNEL_ID = "restaurant_extension_status"
         private const val NOTIFICATION_ID = 1
     }
