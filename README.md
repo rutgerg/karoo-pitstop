@@ -77,13 +77,28 @@ karoo_restaurant/
 
 The Android app uses the consumer-side `KarooSystemService` from a regular Activity — no `KarooExtension` subclass.
 
-## Prerequisites
+## Install
+
+1. Download `pitstop.apk` from the [latest release](https://github.com/rutgerg/karoo-pitstop/releases/latest).
+2. Enable USB debugging on the Karoo 3: Settings → System → About → tap build number 7× → enable USB debugging in Developer options.
+3. Sideload over USB:
+
+   ```bash
+   adb install pitstop.apk
+   ```
+
+4. Reboot the Karoo. The App Store binds the extension as **Pitstop** and the nine data types appear in the Karoo Pages data-type picker. Add any combination of **Restaurant**, **Supermarket**, **Fuel**, **Cafe**, **Hotel**, **Doctor**, **Pharmacy**, **Bike Shop**, and **ATM** tiles to a ride profile page; that page is the on-device entry point. There is no app-drawer icon — see *Karoo platform constraints* below.
+
+## Build from source
+
+Only needed to modify Pitstop or run it on the Pixel emulator. End users should install the prebuilt APK above.
+
+### Prerequisites
 
 - Android Studio Koala (or newer) — manages the JDK, gradle wrapper, AGP.
-- A Karoo 3 with USB-debugging enabled: Settings → System → About → tap build number 7× → enable USB debugging in Developer options.
 - A GitHub Personal Access Token with the `read:packages` scope. The `karoo-ext` SDK is published only to GitHub Packages, which **requires authentication even for public reads**.
 
-## Setup
+### Setup
 
 1. Create a PAT at github.com/settings/tokens → **Generate new token (classic)** → scope **`read:packages`** only.
 2. Add credentials to `~/.gradle/gradle.properties` (NOT to the repo):
@@ -104,16 +119,20 @@ The Android app uses the consumer-side `KarooSystemService` from a regular Activ
 
    Config lives in `.pre-commit-config.yaml` at the repo root.
 
-## Build & sideload to Karoo
+### Build & sideload
 
 ```bash
 ./gradlew :app:assembleDebug
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
-After install + reboot, the Karoo App Store binds the extension as **Pitstop** and its nine data types appear in the Karoo Pages data-type picker. Add any combination of **Restaurant**, **Supermarket**, **Fuel**, **Cafe**, **Hotel**, **Doctor**, **Pharmacy**, **Bike Shop**, and **ATM** tiles to a ride profile page; that page is the on-device entry point. There is no app-drawer icon — see *Karoo platform constraints* below.
-
 For a quicker turnaround during development, run from Studio: select the **app** run config, plug in the Karoo, click ▶︎.
+
+### Releasing (maintainers)
+
+Prebuilt APKs are produced by `.github/workflows/release.yml` on every `v*` tag push and attached to the corresponding GitHub release.
+
+The workflow requires a `KAROO_EXT_PAT` repository secret — a PAT with `read:packages` scope — so the CI runner can fetch `karoo-ext` from GitHub Packages. Add it under Settings → Secrets and variables → Actions. The workflow can also be triggered manually from the Actions tab via **Run workflow** (useful for back-filling the APK on an existing release).
 
 ## Run on the Pixel emulator
 
