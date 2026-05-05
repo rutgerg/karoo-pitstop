@@ -41,44 +41,6 @@ Pitstop is built for situations where the route is set but the next stop is unde
 3. Nine data field tiles (Restaurant, Supermarket, Fuel, Cafe, Hotel, Doctor, Pharmacy, Bike Shop, ATM) on your ride profile page render the nearest non-closed POI per category, with distance, name, and the OSM `opening_hours` line. Closed entries are filtered out; Open and Unknown are both shown.
 4. Tap a tile → `LaunchPinDrop(Symbol.POI(...))` opens the Karoo's pin Activity → tap **Navigate** (replaces the active route) or **Save as POI** (bookmarks for later — no route change).
 
-## Project shape
-
-```
-karoo_restaurant/
-├── app/                                              — Android module
-│   └── src/main/kotlin/dev/karoorestaurant/
-│       ├── KarooRestaurantApp.kt                     Application; assembles KarooClient + RouteWatcher
-│       ├── KarooClient.kt                            wraps the system port, exposes locationFlow + routeFlow + navigateTo
-│       ├── KarooSystemPort.kt                        port over KarooSystemService; production + fake share the interface
-│       ├── RouteWatcher.kt                           collects routeFlow, prefetches corridor, exposes RouteFetchState
-│       ├── RestaurantExtensionService.kt             KarooExtension service; registers the nine DataTypeImpl tiles
-│       ├── NearbyPoiDataType.kt                      per-category data tile rendering distance + name + opening hours
-│       ├── NearbyPicks.kt                            shared compute for tile + Activity picker
-│       ├── LaunchPoiReceiver.kt                      tile-tap broadcast → KarooClient.navigateTo
-│       ├── TestLocationReceiver.kt                   debug-only: inject a synthetic GPS location
-│       ├── SeedPoisReceiver.kt                       debug-only: populate the cache around a coordinate
-│       ├── MainActivity.kt                           Compose picker (legacy entry point; kept for emulator runs)
-│       ├── PoiNearby.kt                              UI display model
-│       ├── db/{PoiStore,AndroidPoiStore}.kt          interface + SQLiteOpenHelper impl
-│       └── ui/{PoiCard, Theme}.kt
-│   └── src/main/res/
-│       ├── drawable/{ic_restaurant,ic_supermarket,ic_fuel,ic_cafe,ic_hotel,ic_doctor,ic_pharmacy,ic_bike_shop,ic_atm,ic_pitstop}.xml
-│       ├── layout/data_field_nearby_poi.xml         RemoteViews layout for the data tile
-│       └── xml/extension_info.xml                    extension metadata read by the Karoo system
-├── data/                                             — Kotlin/JVM module
-│   └── src/main/kotlin/dev/karoorestaurant/data/
-│       ├── Main.kt                                   CLI runner
-│       ├── route/{LatLng, Geo, CorridorSlicer, Polyline, Route}.kt
-│       ├── poi/{Poi, PoiCategory, OpeningHours}.kt
-│       ├── overpass/{OverpassClient, OverpassResponse}.kt
-│       └── store/PoiStore.kt                         JDBC SQLite for the headless prototype
-├── build.gradle.kts
-├── settings.gradle.kts
-└── gradle/wrapper/gradle-wrapper.properties
-```
-
-The Android app uses the consumer-side `KarooSystemService` from a regular Activity — no `KarooExtension` subclass.
-
 ## Install
 
 1. Download `pitstop.apk` from the [latest release](https://github.com/rutgerg/karoo-pitstop/releases/latest).
@@ -130,25 +92,6 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 
 For a quicker turnaround during development, run from Studio: select the **app** run config, plug in the Karoo, click ▶︎.
 
-### Releasing (maintainers)
-
-Prebuilt APKs are produced by `.github/workflows/release.yml` on every `v*` tag push and attached to the corresponding GitHub release. `versionName`, `versionCode`, and the `KarooExtension` reported version are all derived from the most recent `v*` git tag — no source edits needed before tagging:
-
-```bash
-git tag -a vX.Y.Z -m "..."
-git push origin vX.Y.Z
-```
-
-The workflow requires a `KAROO_EXT_PAT` repository secret — a PAT with `read:packages` scope — so the CI runner can fetch `karoo-ext` from GitHub Packages. Add it under Settings → Secrets and variables → Actions. The workflow can also be triggered manually from the Actions tab via **Run workflow** (useful for back-filling the APK on an existing release).
-
-#### Release checklist
-
-Before tagging a new `vX.Y.Z`:
-
-- [ ] **Hardware test (only for non-mechanical releases)** — sideload the latest debug build to a Karoo 3, plan a route, confirm the 9 tiles render with live data and that tapping a tile opens the pin activity. Mechanical releases (version-only bumps) can skip this.
-- [ ] **Screenshot** — refresh `docs/screenshot-karoo-tiles.png` if the tile layout, font, or content changed.
-- [ ] **Status line** — if you re-tested on hardware, append a "last confirmed YYYY-MM-DD" date to the Status section's `Verified end-to-end on a Karoo 3` line.
-
 ## Run on the Pixel emulator
 
 The app installs and launches on a stock Pixel 7 emulator. Without a Karoo OS the SDK can't bind, so `routeFlow` and `locationFlow` never emit — the UI sits on the Idle state ("Plan a route on the Karoo to load nearby POIs"). Useful for verifying the Idle state renders cleanly; not useful for the live cycle.
@@ -172,6 +115,8 @@ Tests: `./gradlew :data:test`.
 
 ## Documentation
 
+- [Project shape](docs/project-shape.md) — module layout and file-by-file role description
+- [Releasing](docs/releasing.md) — maintainer-only workflow and release checklist
 - [Troubleshooting](docs/troubleshooting.md) — common errors and fixes (auth, GPS, fetch failures, gradle cache)
 - [Karoo platform notes](docs/karoo-platform-notes.md) — non-obvious karoo-ext gotchas useful when forking or building your own extension
 
