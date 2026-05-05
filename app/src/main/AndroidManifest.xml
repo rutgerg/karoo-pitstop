@@ -49,6 +49,15 @@
             </intent-filter>
         </receiver>
 
+        <receiver
+            android:name=".HttpProbeReceiver"
+            android:exported="true"
+            tools:ignore="ExportedReceiver">
+            <intent-filter>
+                <action android:name="dev.karoorestaurant.HTTP_PROBE" />
+            </intent-filter>
+        </receiver>
+
         <service
             android:name=".RestaurantExtensionService"
             android:exported="true"
