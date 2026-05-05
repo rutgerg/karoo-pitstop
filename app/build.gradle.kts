@@ -5,6 +5,29 @@ plugins {
     id("org.jetbrains.kotlin.plugin.serialization")
 }
 
+fun gitVersionName(): String = try {
+    val process = ProcessBuilder("git", "describe", "--tags", "--abbrev=0", "--match", "v*")
+        .redirectErrorStream(true)
+        .start()
+    val output = process.inputStream.bufferedReader().readText().trim()
+    if (process.waitFor() != 0 || output.isEmpty()) "0.0.0-dev"
+    else output.removePrefix("v")
+} catch (e: Exception) {
+    "0.0.0-dev"
+}
+
+fun versionCodeFromName(name: String): Int {
+    val parts = name.substringBefore("-").split(".")
+    if (parts.size != 3) return 1
+    val major = parts[0].toIntOrNull() ?: return 1
+    val minor = parts[1].toIntOrNull() ?: return 1
+    val patch = parts[2].toIntOrNull() ?: return 1
+    return maxOf(1, major * 10000 + minor * 100 + patch)
+}
+
+val appVersionName = gitVersionName()
+val appVersionCode = versionCodeFromName(appVersionName)
+
 android {
     namespace = "dev.karoorestaurant"
     compileSdk = 35
@@ -13,8 +36,8 @@ android {
         applicationId = "dev.karoorestaurant"
         minSdk = 23
         targetSdk = 34
-        versionCode = 3
-        versionName = "1.0.1"
+        versionCode = appVersionCode
+        versionName = appVersionName
     }
 
     buildTypes {
@@ -38,6 +61,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     sourceSets["main"].java.srcDirs("src/main/kotlin")
