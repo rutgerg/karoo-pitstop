@@ -165,3 +165,7 @@ Things discovered building this extension that are not obvious from the `karoo-e
 ## What's next (post-v0.1.0)
 
 The v0.2 backlog covers: app-icon polish, chunked Overpass queries for routes >80 km, settings screen (radius, category priority), additional categories (bar, cafe, pharmacy), cache TTL with "unverified" badge for older entries, small-screen layout audit, save-favorites, and a ground-truth ride checkpoint. See the [v0.2 project board](https://github.com/users/rutgerg/projects/14) for tracked issues.
+
+## License
+
+Released under the [MIT License](LICENSE) — © 2026 Rutger Geelen. Free to use, fork, and modify with attribution.
