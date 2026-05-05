@@ -147,7 +147,6 @@ Before tagging a new `vX.Y.Z`:
 
 - [ ] **Hardware test (only for non-mechanical releases)** — sideload the latest debug build to a Karoo 3, plan a route, confirm the 9 tiles render with live data and that tapping a tile opens the pin activity. Mechanical releases (version-only bumps) can skip this.
 - [ ] **Screenshot** — refresh `docs/screenshot-karoo-tiles.png` if the tile layout, font, or content changed.
-- [ ] **Backlog** — trim shipped items from the `What's next` section.
 - [ ] **Status line** — if you re-tested on hardware, append a "last confirmed YYYY-MM-DD" date to the Status section's `Verified end-to-end on a Karoo 3` line.
 
 ## Run on the Pixel emulator
@@ -226,7 +225,9 @@ Things discovered building this extension that are not obvious from the `karoo-e
 
 ## What's next
 
-Open backlog items: app-icon polish, chunked Overpass queries for routes >80 km, settings screen (radius, category priority), cache TTL with "unverified" badge for older entries, small-screen layout audit, and save-favorites. See [open issues](https://github.com/rutgerg/karoo-pitstop/issues) for the current tracker.
+See the [issue tracker](https://github.com/rutgerg/karoo-pitstop/issues) for open features and bugs.
+
+Hit a bug or have a feature request? [Open an issue](https://github.com/rutgerg/karoo-pitstop/issues/new) — contributions and reports are welcome.
 
 ## License
 
