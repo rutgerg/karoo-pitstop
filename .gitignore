@@ -16,3 +16,5 @@ captures/
 *.sqlite
 *.sqlite-journal
 *.db
+
+*.log
