@@ -4,7 +4,9 @@ An Android app for the Hammerhead Karoo 3 that surfaces the **nearest open resta
 
 Repository: [github.com/rutgerg/karoo-pitstop](https://github.com/rutgerg/karoo-pitstop)
 
-> **🎉 v1.0.0 is out** — first stable release. See the [release notes](https://github.com/rutgerg/karoo-pitstop/releases/tag/v1.0.0).
+[![Latest release](https://img.shields.io/github/v/release/rutgerg/karoo-pitstop)](https://github.com/rutgerg/karoo-pitstop/releases/latest)
+[![Release build](https://img.shields.io/github/actions/workflow/status/rutgerg/karoo-pitstop/release.yml?label=release%20build)](https://github.com/rutgerg/karoo-pitstop/actions/workflows/release.yml)
+[![License](https://img.shields.io/github/license/rutgerg/karoo-pitstop)](LICENSE)
 
 <p align="center">
   <img src="docs/screenshot-karoo-tiles.png" alt="Three nearby-POI data tiles on a Karoo 3 ride profile page" width="280" />
@@ -29,7 +31,7 @@ Pitstop is built for situations where the route is set but the next stop is unde
 
 ## Status
 
-- **`:app`** — Android module. Nine per-category data field tiles (Restaurant, Supermarket, Fuel, Cafe, Hotel, Doctor, Pharmacy, Bike Shop, ATM) registered as `KarooExtension` data types render on a ride profile page. Tap a tile to dispatch `LaunchPinDrop` and open the Karoo's pin activity. Verified end-to-end on a Karoo 3 (v1.0.0).
+- **`:app`** — Android module. Nine per-category data field tiles (Restaurant, Supermarket, Fuel, Cafe, Hotel, Doctor, Pharmacy, Bike Shop, ATM) registered as `KarooExtension` data types render on a ride profile page. Tap a tile to dispatch `LaunchPinDrop` and open the Karoo's pin activity. Verified end-to-end on a Karoo 3.
 - **`:data`** — Headless Kotlin/JVM module: Overpass POI fetcher, opening-hours evaluator, polyline decoder, SQLite cache. Runnable on a Mac via `./gradlew :data:run`. JUnit tests cover slicer, opening-hours, polyline. App-level tests cover `KarooClient.navigateTo` and `RouteWatcher`.
 
 ## How it works
@@ -130,9 +132,23 @@ For a quicker turnaround during development, run from Studio: select the **app**
 
 ### Releasing (maintainers)
 
-Prebuilt APKs are produced by `.github/workflows/release.yml` on every `v*` tag push and attached to the corresponding GitHub release.
+Prebuilt APKs are produced by `.github/workflows/release.yml` on every `v*` tag push and attached to the corresponding GitHub release. `versionName`, `versionCode`, and the `KarooExtension` reported version are all derived from the most recent `v*` git tag — no source edits needed before tagging:
+
+```bash
+git tag -a vX.Y.Z -m "..."
+git push origin vX.Y.Z
+```
 
 The workflow requires a `KAROO_EXT_PAT` repository secret — a PAT with `read:packages` scope — so the CI runner can fetch `karoo-ext` from GitHub Packages. Add it under Settings → Secrets and variables → Actions. The workflow can also be triggered manually from the Actions tab via **Run workflow** (useful for back-filling the APK on an existing release).
+
+#### Release checklist
+
+Before tagging a new `vX.Y.Z`:
+
+- [ ] **Hardware test (only for non-mechanical releases)** — sideload the latest debug build to a Karoo 3, plan a route, confirm the 9 tiles render with live data and that tapping a tile opens the pin activity. Mechanical releases (version-only bumps) can skip this.
+- [ ] **Screenshot** — refresh `docs/screenshot-karoo-tiles.png` if the tile layout, font, or content changed.
+- [ ] **Backlog** — trim shipped items from the `What's next` section.
+- [ ] **Status line** — if you re-tested on hardware, append a "last confirmed YYYY-MM-DD" date to the Status section's `Verified end-to-end on a Karoo 3` line.
 
 ## Run on the Pixel emulator
 
