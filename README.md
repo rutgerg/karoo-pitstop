@@ -29,14 +29,14 @@ Pitstop is built for situations where the route is set but the next stop is unde
 
 ## Status
 
-- **`:app`** — Android module. Three per-category data field tiles (Restaurant / Supermarket / Fuel) registered as `KarooExtension` data types render on a ride profile page. Tap a tile to dispatch `LaunchPinDrop` and open the Karoo's pin activity. Verified end-to-end on a Karoo 3 (v1.0.0).
+- **`:app`** — Android module. Nine per-category data field tiles (Restaurant, Supermarket, Fuel, Cafe, Hotel, Doctor, Pharmacy, Bike Shop, ATM) registered as `KarooExtension` data types render on a ride profile page. Tap a tile to dispatch `LaunchPinDrop` and open the Karoo's pin activity. Verified end-to-end on a Karoo 3 (v1.0.0).
 - **`:data`** — Headless Kotlin/JVM module: Overpass POI fetcher, opening-hours evaluator, polyline decoder, SQLite cache. Runnable on a Mac via `./gradlew :data:run`. JUnit tests cover slicer, opening-hours, polyline. App-level tests cover `KarooClient.navigateTo` and `RouteWatcher`.
 
 ## How it works
 
 1. You plan a route on the Karoo's native navigator.
 2. `RouteWatcher` (Application-scoped) sees the route appear, samples the polyline every 2 km, queries Overpass with a 10 km buffer, and upserts ~thousands of POIs into local SQLite. Dedups on a `route_fetches` table so the same route isn't re-fetched.
-3. Three data field tiles (Restaurant / Supermarket / Fuel) on your ride profile page render the nearest non-closed POI per category, with distance, name, and the OSM `opening_hours` line. Closed entries are filtered out; Open and Unknown are both shown.
+3. Nine data field tiles (Restaurant, Supermarket, Fuel, Cafe, Hotel, Doctor, Pharmacy, Bike Shop, ATM) on your ride profile page render the nearest non-closed POI per category, with distance, name, and the OSM `opening_hours` line. Closed entries are filtered out; Open and Unknown are both shown.
 4. Tap a tile → `LaunchPinDrop(Symbol.POI(...))` opens the Karoo's pin Activity → tap **Navigate** (replaces the active route) or **Save as POI** (bookmarks for later — no route change).
 
 ## Project shape
@@ -49,7 +49,7 @@ karoo_restaurant/
 │       ├── KarooClient.kt                            wraps the system port, exposes locationFlow + routeFlow + navigateTo
 │       ├── KarooSystemPort.kt                        port over KarooSystemService; production + fake share the interface
 │       ├── RouteWatcher.kt                           collects routeFlow, prefetches corridor, exposes RouteFetchState
-│       ├── RestaurantExtensionService.kt             KarooExtension service; registers the three DataTypeImpl tiles
+│       ├── RestaurantExtensionService.kt             KarooExtension service; registers the nine DataTypeImpl tiles
 │       ├── NearbyPoiDataType.kt                      per-category data tile rendering distance + name + opening hours
 │       ├── NearbyPicks.kt                            shared compute for tile + Activity picker
 │       ├── LaunchPoiReceiver.kt                      tile-tap broadcast → KarooClient.navigateTo
@@ -60,7 +60,7 @@ karoo_restaurant/
 │       ├── db/{PoiStore,AndroidPoiStore}.kt          interface + SQLiteOpenHelper impl
 │       └── ui/{PoiCard, Theme}.kt
 │   └── src/main/res/
-│       ├── drawable/{ic_restaurant,ic_supermarket,ic_fuel}.xml
+│       ├── drawable/{ic_restaurant,ic_supermarket,ic_fuel,ic_cafe,ic_hotel,ic_doctor,ic_pharmacy,ic_bike_shop,ic_atm,ic_pitstop}.xml
 │       ├── layout/data_field_nearby_poi.xml         RemoteViews layout for the data tile
 │       └── xml/extension_info.xml                    extension metadata read by the Karoo system
 ├── data/                                             — Kotlin/JVM module
@@ -111,7 +111,7 @@ The Android app uses the consumer-side `KarooSystemService` from a regular Activ
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
-After install + reboot, the Karoo App Store binds the extension as **Pitstop** and its three data types appear in the Karoo Pages data-type picker. Add **Restaurant**, **Supermarket**, and **Fuel** to a ride profile page; that page is the on-device entry point. There is no app-drawer icon — see *Karoo platform constraints* below.
+After install + reboot, the Karoo App Store binds the extension as **Pitstop** and its nine data types appear in the Karoo Pages data-type picker. Add any combination of **Restaurant**, **Supermarket**, **Fuel**, **Cafe**, **Hotel**, **Doctor**, **Pharmacy**, **Bike Shop**, and **ATM** tiles to a ride profile page; that page is the on-device entry point. There is no app-drawer icon — see *Karoo platform constraints* below.
 
 For a quicker turnaround during development, run from Studio: select the **app** run config, plug in the Karoo, click ▶︎.
 
@@ -191,7 +191,7 @@ Things discovered building this extension that are not obvious from the `karoo-e
 
 ## What's next
 
-Open backlog items: app-icon polish, chunked Overpass queries for routes >80 km, settings screen (radius, category priority), additional categories (bar, cafe, pharmacy), cache TTL with "unverified" badge for older entries, small-screen layout audit, and save-favorites. See the [project board](https://github.com/users/rutgerg/projects/14) for tracked issues.
+Open backlog items: app-icon polish, chunked Overpass queries for routes >80 km, settings screen (radius, category priority), cache TTL with "unverified" badge for older entries, small-screen layout audit, and save-favorites. See the [project board](https://github.com/users/rutgerg/projects/14) for tracked issues.
 
 ## License
 
