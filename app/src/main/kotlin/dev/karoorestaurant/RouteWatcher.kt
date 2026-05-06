@@ -2,6 +2,7 @@ package dev.karoorestaurant
 
 import android.util.Log
 import dev.karoorestaurant.data.route.Route
+import dev.karoorestaurant.telemetry.Telemetry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -18,6 +19,7 @@ class RouteWatcher(
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO),
     private val retryCooldownMs: Long = DEFAULT_RETRY_COOLDOWN_MS,
     private val maxAttempts: Int = DEFAULT_MAX_ATTEMPTS,
+    private val telemetry: Telemetry? = null,
 ) {
 
     private val _state = MutableStateFlow<RouteFetchState>(RouteFetchState.Idle)
@@ -62,6 +64,7 @@ class RouteWatcher(
         return try {
             val count = karoo.refreshAroundCorridor(route.polyline)
             karoo.store().recordRouteFetch(route.id)
+            telemetry?.recordPrefetch()
             _state.value = RouteFetchState.Cached(route.name, count)
             true
         } catch (t: Throwable) {

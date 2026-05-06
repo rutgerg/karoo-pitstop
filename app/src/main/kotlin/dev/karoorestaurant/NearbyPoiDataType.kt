@@ -28,6 +28,8 @@ class NearbyPoiDataType(
 ) : DataTypeImpl(extension = RestaurantExtensionService.EXTENSION_ID, typeId = typeId) {
 
     override fun startView(context: Context, config: ViewConfig, emitter: ViewEmitter) {
+        (context.applicationContext as? KarooRestaurantApp)?.telemetry?.recordTileRender()
+
         val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
         emitter.setCancellable { scope.cancel() }
 

@@ -21,7 +21,7 @@ Before tagging a new `vX.Y.Z`:
 
 Anonymous heartbeat telemetry (#95) writes to a single Supabase project. The credentials live outside the repo:
 
-- `SUPABASE_URL` and `SUPABASE_ANON_KEY` belong in `~/.gradle/gradle.properties` (or exported as env vars of the same name). The Android build reads them via `BuildConfig`. When unset, the build sees empty strings and the heartbeat sender no-ops — the rest of the app is unaffected.
+- The build reads `supabase.url` and `supabase.anonKey` from `~/.gradle/gradle.properties` (NOT committed) and exposes them as `BuildConfig.SUPABASE_URL` / `BuildConfig.SUPABASE_ANON_KEY`. When either is empty (e.g. on a fresh clone before you set them) the heartbeat sender no-ops — the rest of the app is unaffected. A third flag, `BuildConfig.TELEMETRY_ENABLED`, is hardcoded `false` until #98 wires it to a Settings toggle.
 - The canonical maintainer copy of the URL and anon key lives in your private password manager / secret note. Update that note when rotating the key, then update the `KAROO_EXT_PAT`-equivalent repo secret so the release workflow can build APKs with telemetry baked in.
 - The schema is reproducible from `supabase/migrations/20260506000000_heartbeats.sql`. On a fresh project: `supabase db push` (CLI) or paste the file into the SQL editor.
 - Aggregation views (`mau_30d`, `weekly_events_per_install`) are read from the Supabase dashboard. They are not exposed via the public REST API because the `anon` role has no `select` on `heartbeats`.
