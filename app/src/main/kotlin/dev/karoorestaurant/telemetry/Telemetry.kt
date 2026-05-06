@@ -14,13 +14,26 @@ import java.util.Locale
 import java.util.TimeZone
 import java.util.concurrent.atomic.AtomicBoolean
 
-class Telemetry(
-    context: Context,
-    private val sender: HeartbeatSender = HeartbeatSender(),
-    private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO),
+internal const val PREFS_NAME = "telemetry"
+internal const val KEY_LAST_SENT_DAY = "last_sent_day"
+
+class Telemetry internal constructor(
+    private val prefs: SharedPreferences,
+    private val send: (HeartbeatPayload) -> Boolean,
+    private val scope: CoroutineScope,
+    private val canSend: () -> Boolean,
 ) {
-    private val prefs: SharedPreferences =
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    constructor(context: Context) : this(
+        prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE),
+        send = HeartbeatSender()::send,
+        scope = CoroutineScope(SupervisorJob() + Dispatchers.IO),
+        canSend = {
+            BuildConfig.TELEMETRY_ENABLED &&
+                BuildConfig.SUPABASE_URL.isNotEmpty() &&
+                BuildConfig.SUPABASE_ANON_KEY.isNotEmpty()
+        },
+    )
+
     private val installId: String = installId(prefs)
     private val counters = TelemetryCounters()
     private val sending = AtomicBoolean(false)
@@ -40,8 +53,7 @@ class Telemetry(
     }
 
     private fun tryHeartbeat() {
-        if (!BuildConfig.TELEMETRY_ENABLED) return
-        if (BuildConfig.SUPABASE_URL.isEmpty() || BuildConfig.SUPABASE_ANON_KEY.isEmpty()) return
+        if (!canSend()) return
         val today = todayUtc()
         if (prefs.getString(KEY_LAST_SENT_DAY, null) == today) return
         if (!sending.compareAndSet(false, true)) return
@@ -57,7 +69,7 @@ class Telemetry(
                     prefetch_count = snapshot.prefetch,
                     app_version = BuildConfig.VERSION_NAME,
                 )
-                if (sender.send(payload)) {
+                if (send(payload)) {
                     prefs.edit().putString(KEY_LAST_SENT_DAY, today).apply()
                     Log.i(TAG, "heartbeat sent for $today")
                 } else {
@@ -70,8 +82,6 @@ class Telemetry(
     }
 
     companion object {
-        private const val PREFS_NAME = "telemetry"
-        private const val KEY_LAST_SENT_DAY = "last_sent_day"
         private const val TAG = "Telemetry"
 
         private fun todayUtc(): String =
