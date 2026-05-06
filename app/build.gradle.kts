@@ -38,6 +38,18 @@ android {
         targetSdk = 34
         versionCode = appVersionCode
         versionName = appVersionName
+
+        buildConfigField("boolean", "TELEMETRY_ENABLED", "false")
+        buildConfigField(
+            "String",
+            "SUPABASE_URL",
+            "\"${project.findProperty("supabase.url") ?: ""}\"",
+        )
+        buildConfigField(
+            "String",
+            "SUPABASE_ANON_KEY",
+            "\"${project.findProperty("supabase.anonKey") ?: ""}\"",
+        )
     }
 
     buildTypes {

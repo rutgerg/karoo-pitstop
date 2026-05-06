@@ -3,6 +3,7 @@ package dev.karoorestaurant
 import android.app.Application
 import dev.karoorestaurant.data.overpass.OverpassClient
 import dev.karoorestaurant.db.AndroidPoiStore
+import dev.karoorestaurant.telemetry.Telemetry
 
 class KarooRestaurantApp : Application() {
 
@@ -12,15 +13,19 @@ class KarooRestaurantApp : Application() {
     lateinit var routeWatcher: RouteWatcher
         private set
 
+    lateinit var telemetry: Telemetry
+        private set
+
     override fun onCreate() {
         super.onCreate()
+        telemetry = Telemetry(this)
         val systemPort = RealKarooSystemPort(this)
         karoo = KarooClient(
             karooSystem = systemPort,
             store = AndroidPoiStore(this),
             overpass = OverpassClient(),
         )
-        routeWatcher = RouteWatcher(karoo).also { it.start() }
+        routeWatcher = RouteWatcher(karoo, telemetry = telemetry).also { it.start() }
 
         CacheStateNotifier(
             systemPort = systemPort,
