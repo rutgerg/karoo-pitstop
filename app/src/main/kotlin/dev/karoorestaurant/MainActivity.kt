@@ -9,12 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FabPosition
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
@@ -41,10 +36,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             RestaurantTheme {
-                SettingsScreen(
-                    repository = app.settings,
-                    onBack = { finish() },
-                )
+                SettingsScreen(repository = app.settings)
             }
         }
     }
@@ -52,10 +44,7 @@ class MainActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun SettingsScreen(
-    repository: SettingsRepository,
-    onBack: () -> Unit,
-) {
+private fun SettingsScreen(repository: SettingsRepository) {
     val telemetryEnabled by repository.telemetryEnabled.collectAsState()
     val coroutineScope = rememberCoroutineScope()
 
@@ -63,19 +52,6 @@ private fun SettingsScreen(
         topBar = {
             TopAppBar(title = { Text(stringResource(R.string.app_name)) })
         },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = onBack,
-                containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-            ) {
-                Icon(
-                    Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = stringResource(R.string.action_back),
-                )
-            }
-        },
-        floatingActionButtonPosition = FabPosition.Start,
     ) { padding ->
         Column(
             modifier = Modifier
