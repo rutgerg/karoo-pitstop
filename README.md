@@ -94,7 +94,7 @@ For a quicker turnaround during development, run from Studio: select the **app**
 
 ## Run on the Pixel emulator
 
-The app installs and launches on a stock Pixel 7 emulator. Without a Karoo OS the SDK can't bind, so `routeFlow` and `locationFlow` never emit — the UI sits on the Idle state ("Plan a route on the Karoo to load nearby POIs"). Useful for verifying the Idle state renders cleanly; not useful for the live cycle.
+The app installs and launches on a stock Pixel 7 emulator. Without a Karoo OS the SDK can't bind, so the data tiles never receive route/location events — but the launcher Activity (`MainActivity`) is the Settings screen, which renders without needing the Karoo SDK. Useful for verifying Settings renders cleanly and the telemetry toggle persists; not useful for the live tile cycle.
 
 ## Run the data prototype (no Karoo needed)
 

@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Pitstop</string>
-    <string name="screen_title">Nearest open</string>
     <string name="category_restaurant">Restaurant</string>
     <string name="category_supermarket">Supermarket</string>
     <string name="category_fuel">Fuel</string>
@@ -11,11 +10,6 @@
     <string name="category_pharmacy">Pharmacy</string>
     <string name="category_bike_shop">Bike Shop</string>
     <string name="category_atm">ATM</string>
-    <string name="state_idle">Plan a route on the Karoo to load nearby POIs.</string>
-    <string name="state_fetching">Caching corridor for %1$s…</string>
-    <string name="state_cached">%1$d POIs cached for %2$s.</string>
-    <string name="state_no_location">Waiting for GPS location…</string>
-    <string name="state_error">Couldn\'t cache POIs: %1$s</string>
     <string name="data_type_nearby_description">Nearest along the route</string>
     <string name="hours_open_prefix">Open</string>
     <string name="hours_unknown">unknown</string>
@@ -23,8 +17,6 @@
     <string name="field_none">—</string>
     <string name="notif_cache_success">%1$d POIs cached for %2$s</string>
     <string name="notif_cache_failure">Prefetch failed — check phone connection</string>
-    <string name="settings_title">Settings</string>
     <string name="settings_telemetry_title">Anonymous usage stats</string>
     <string name="settings_telemetry_subtitle">Counts of tile renders and route prefetches. No location, no POI names. See Privacy doc for details.</string>
-    <string name="settings_open">Open settings</string>
 </resources>

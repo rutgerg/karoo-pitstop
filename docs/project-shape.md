@@ -14,10 +14,12 @@ karoo_restaurant/
 │       ├── LaunchPoiReceiver.kt                      tile-tap broadcast → KarooClient.navigateTo
 │       ├── TestLocationReceiver.kt                   debug-only: inject a synthetic GPS location
 │       ├── SeedPoisReceiver.kt                       debug-only: populate the cache around a coordinate
-│       ├── MainActivity.kt                           Compose picker (legacy entry point; kept for emulator runs)
+│       ├── MainActivity.kt                           Compose Settings screen; the only Activity, launched from Karoo Extensions → Pitstop → Open
 │       ├── PoiNearby.kt                              UI display model
+│       ├── settings/SettingsRepository.kt            DataStore-backed telemetryEnabled (StateFlow + suspend setter)
+│       ├── telemetry/{InstallId, TelemetryCounters, HeartbeatSender, Telemetry}.kt
 │       ├── db/{PoiStore,AndroidPoiStore}.kt          interface + SQLiteOpenHelper impl
-│       └── ui/{PoiCard, Theme}.kt
+│       └── ui/Theme.kt
 │   └── src/main/res/
 │       ├── drawable/{ic_restaurant,ic_supermarket,ic_fuel,ic_cafe,ic_hotel,ic_doctor,ic_pharmacy,ic_bike_shop,ic_atm,ic_pitstop}.xml
 │       ├── layout/data_field_nearby_poi.xml         RemoteViews layout for the data tile
