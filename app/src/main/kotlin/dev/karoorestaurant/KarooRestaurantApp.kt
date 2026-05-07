@@ -3,6 +3,7 @@ package dev.karoorestaurant
 import android.app.Application
 import dev.karoorestaurant.data.overpass.OverpassClient
 import dev.karoorestaurant.db.AndroidPoiStore
+import dev.karoorestaurant.settings.SettingsRepository
 import dev.karoorestaurant.telemetry.Telemetry
 
 class KarooRestaurantApp : Application() {
@@ -13,12 +14,16 @@ class KarooRestaurantApp : Application() {
     lateinit var routeWatcher: RouteWatcher
         private set
 
+    lateinit var settings: SettingsRepository
+        private set
+
     lateinit var telemetry: Telemetry
         private set
 
     override fun onCreate() {
         super.onCreate()
-        telemetry = Telemetry(this)
+        settings = SettingsRepository(this)
+        telemetry = Telemetry(this, telemetryEnabled = { settings.telemetryEnabled.value })
         val systemPort = RealKarooSystemPort(this)
         karoo = KarooClient(
             karooSystem = systemPort,

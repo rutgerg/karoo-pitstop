@@ -23,12 +23,12 @@ class Telemetry internal constructor(
     private val scope: CoroutineScope,
     private val canSend: () -> Boolean,
 ) {
-    constructor(context: Context) : this(
+    constructor(context: Context, telemetryEnabled: () -> Boolean) : this(
         prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE),
         send = HeartbeatSender()::send,
         scope = CoroutineScope(SupervisorJob() + Dispatchers.IO),
         canSend = {
-            BuildConfig.TELEMETRY_ENABLED &&
+            telemetryEnabled() &&
                 BuildConfig.SUPABASE_URL.isNotEmpty() &&
                 BuildConfig.SUPABASE_ANON_KEY.isNotEmpty()
         },
