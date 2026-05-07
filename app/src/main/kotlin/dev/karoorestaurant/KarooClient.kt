@@ -30,13 +30,13 @@ class KarooClient(
         karooSystem.connect { connected -> Log.i(TAG, "KarooSystem connected=$connected") }
     }
 
-    private val testLocationFlow = MutableSharedFlow<LatLng>(extraBufferCapacity = 8)
+    private val testLocationFlow = MutableSharedFlow<RiderLocation>(extraBufferCapacity = 8)
 
-    val locationFlow: Flow<LatLng> = merge(
+    val locationFlow: Flow<RiderLocation> = merge(
         callbackFlow {
             val id = karooSystem.observeLocations { trySend(it) }
             awaitClose { karooSystem.removeConsumer(id) }
-        }.map { LatLng(it.lat, it.lng) },
+        }.map { RiderLocation(LatLng(it.lat, it.lng), it.orientation) },
         testLocationFlow,
     )
 
@@ -46,9 +46,9 @@ class KarooClient(
     }.map { it.state.toRoute() }
         .distinctUntilChangedBy { it?.id }
 
-    fun injectTestLocation(location: LatLng) {
-        val sent = testLocationFlow.tryEmit(location)
-        Log.i(TAG, "injectTestLocation $location sent=$sent")
+    fun injectTestLocation(location: LatLng, orientationDegrees: Double? = null) {
+        val sent = testLocationFlow.tryEmit(RiderLocation(location, orientationDegrees))
+        Log.i(TAG, "injectTestLocation $location orientation=$orientationDegrees sent=$sent")
     }
 
     fun store(): PoiStore = store

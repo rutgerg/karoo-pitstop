@@ -8,6 +8,8 @@ import android.widget.RemoteViews
 import dev.karoorestaurant.data.poi.OpeningHours
 import dev.karoorestaurant.data.poi.Poi
 import dev.karoorestaurant.data.poi.PoiCategory
+import dev.karoorestaurant.data.route.Geo
+import dev.karoorestaurant.data.route.LatLng
 import io.hammerhead.karooext.extension.DataTypeImpl
 import io.hammerhead.karooext.internal.ViewEmitter
 import io.hammerhead.karooext.models.ViewConfig
@@ -33,21 +35,26 @@ class NearbyPoiDataType(
         val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
         emitter.setCancellable { scope.cancel() }
 
-        emitter.updateView(buildView(context, pick = null, placeholderRes = R.string.field_waiting))
+        emitter.updateView(buildView(context, pick = null, rider = null, placeholderRes = R.string.field_waiting))
 
         scope.launch {
-            karoo.locationFlow.sample(SAMPLE_MS).collect { location ->
+            karoo.locationFlow.sample(SAMPLE_MS).collect { rider ->
                 val pick = withContext(Dispatchers.IO) {
-                    computeNearbyPicks(karoo, location).firstOrNull { it.poi.category == category }
+                    computeNearbyPicks(karoo, rider.point).firstOrNull { it.poi.category == category }
                 }
-                emitter.updateView(buildView(context, pick = pick, placeholderRes = R.string.field_none))
+                emitter.updateView(buildView(context, pick = pick, rider = rider, placeholderRes = R.string.field_none))
             }
         }
     }
 
-    private fun buildView(context: Context, pick: PoiNearby?, placeholderRes: Int): RemoteViews {
+    private fun buildView(
+        context: Context,
+        pick: PoiNearby?,
+        rider: RiderLocation?,
+        placeholderRes: Int,
+    ): RemoteViews {
         val views = RemoteViews(context.packageName, R.layout.data_field_nearby_poi)
-        val mainText = pick?.let { "${formatDistance(it.distanceMeters)}  ${it.poi.name}" }
+        val mainText = pick?.let { buildPoiLine(it, rider) }
             ?: context.getString(placeholderRes)
         views.setTextViewText(R.id.poi_text, mainText)
 
@@ -97,6 +104,18 @@ class NearbyPoiDataType(
 
     private fun formatDistance(meters: Double): String =
         if (meters < 1000.0) "${meters.toInt()} m" else "%.1f km".format(meters / 1000.0)
+
+    private fun buildPoiLine(pick: PoiNearby, rider: RiderLocation?): String {
+        val arrow = directionArrow(pick, rider)
+        val prefix = if (arrow != null) "$arrow " else ""
+        return "$prefix${formatDistance(pick.distanceMeters)}  ${pick.poi.name}"
+    }
+
+    private fun directionArrow(pick: PoiNearby, rider: RiderLocation?): Char? {
+        val heading = rider?.orientationDegrees ?: return null
+        val bearingToPoi = Geo.bearingDegrees(rider.point, LatLng(pick.poi.lat, pick.poi.lon))
+        return arrowFor(bearingToPoi - heading)
+    }
 
     companion object {
         const val TYPE_RESTAURANT = "nearby_restaurant"
