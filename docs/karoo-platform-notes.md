@@ -7,6 +7,7 @@ Things discovered building Pitstop that are not obvious from the `karoo-ext` 1.1
 - **There is no third-party app drawer on the Karoo 3.** The home screen is the Hammerhead launcher and does not enumerate activities with `LAUNCHER` intent filters. A traditional Android-style "tap an icon to launch the app" path does not exist for sideloaded apps.
 - **`KarooExtension` is an Android `Service`, not an Activity wrapper.** Registering one does not give your app a tappable icon anywhere. The only on-device surfaces it exposes are: data field tiles (`DataTypeImpl`), map overlays (`MapEffect`), bonus actions on paired controllers (`BonusAction`), and FIT-file effects.
 - **`BonusAction` requires a paired hardware controller.** It surfaces only as an assignable function on a SRAM AXS-style remote (Blip / Eagle / similar). Without one paired, `BonusAction` has no UI to bind to.
+- **Third-party Activities do not get a Karoo-provided back button.** The pill-shaped back affordance visible in the Hammerhead Extensions list and other system screens is rendered by the launcher, not overlaid on third-party Activities at runtime. Verified 2026-05-07 by shipping Pitstop's Settings screen with no back button (#118 / PR #119) and observing no fallback. Apps reachable via `Extensions → <app> → Open` must draw their own back affordance and call `finish()` on tap.
 
 ## Service lifecycle
 

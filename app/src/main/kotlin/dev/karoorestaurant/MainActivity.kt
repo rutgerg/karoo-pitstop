@@ -4,12 +4,17 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
@@ -36,7 +41,10 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             RestaurantTheme {
-                SettingsScreen(repository = app.settings)
+                SettingsScreen(
+                    repository = app.settings,
+                    onBack = { finish() },
+                )
             }
         }
     }
@@ -44,7 +52,10 @@ class MainActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun SettingsScreen(repository: SettingsRepository) {
+private fun SettingsScreen(
+    repository: SettingsRepository,
+    onBack: () -> Unit,
+) {
     val telemetryEnabled by repository.telemetryEnabled.collectAsState()
     val coroutineScope = rememberCoroutineScope()
 
@@ -53,19 +64,29 @@ private fun SettingsScreen(repository: SettingsRepository) {
             TopAppBar(title = { Text(stringResource(R.string.app_name)) })
         },
     ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            TelemetryRow(
-                checked = telemetryEnabled,
-                onCheckedChange = { newValue ->
-                    coroutineScope.launch { repository.setTelemetryEnabled(newValue) }
-                },
-            )
+        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                TelemetryRow(
+                    checked = telemetryEnabled,
+                    onCheckedChange = { newValue ->
+                        coroutineScope.launch { repository.setTelemetryEnabled(newValue) }
+                    },
+                )
+            }
+            IconButton(
+                onClick = onBack,
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(8.dp),
+            ) {
+                Icon(
+                    Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = stringResource(R.string.action_back),
+                )
+            }
         }
     }
 }
