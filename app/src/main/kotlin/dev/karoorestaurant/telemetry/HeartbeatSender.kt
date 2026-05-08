@@ -2,6 +2,7 @@ package dev.karoorestaurant.telemetry
 
 import android.util.Log
 import dev.karoorestaurant.BuildConfig
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
@@ -21,16 +22,16 @@ class HeartbeatSender(
         val body = Json.encodeToString(HeartbeatPayload.serializer(), payload)
             .toRequestBody(JSON_MEDIA)
         val request = Request.Builder()
-            .url("$supabaseUrl/rest/v1/heartbeats?on_conflict=install_id,day")
+            .url("$supabaseUrl/rest/v1/rpc/heartbeat_upsert")
             .header("apikey", anonKey)
             .header("Authorization", "Bearer $anonKey")
-            .header("Prefer", "resolution=merge-duplicates,return=minimal")
+            .header("Prefer", "return=minimal")
             .post(body)
             .build()
         return try {
             http.newCall(request).execute().use { response ->
-                // 201 = inserted; 200 = merged via on_conflict
-                val ok = response.code == 200 || response.code == 201
+                // 204 = function returned void successfully; 200 also accepted
+                val ok = response.code == 200 || response.code == 204
                 if (!ok) Log.w(TAG, "heartbeat failed status=${response.code}")
                 ok
             }
@@ -53,9 +54,9 @@ class HeartbeatSender(
 
 @Serializable
 data class HeartbeatPayload(
-    val install_id: String,
-    val day: String,
-    val tile_renders: Int,
-    val prefetch_count: Int,
-    val app_version: String,
+    @SerialName("p_install_id") val install_id: String,
+    @SerialName("p_day") val day: String,
+    @SerialName("p_tile_renders") val tile_renders: Int,
+    @SerialName("p_prefetch_count") val prefetch_count: Int,
+    @SerialName("p_app_version") val app_version: String,
 )
