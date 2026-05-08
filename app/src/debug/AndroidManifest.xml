@@ -4,6 +4,12 @@
 
     <application>
 
+        <activity
+            android:name=".BrowsePoisActivity"
+            android:exported="true"
+            tools:replace="android:exported"
+            tools:ignore="ExportedActivity" />
+
         <receiver
             android:name=".TestLocationReceiver"
             android:exported="true"

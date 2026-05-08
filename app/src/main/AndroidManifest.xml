@@ -27,6 +27,12 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".BrowsePoisActivity"
+            android:exported="false"
+            android:label="@string/app_name"
+            android:launchMode="singleTop" />
+
         <receiver
             android:name=".LaunchPoiReceiver"
             android:exported="false" />
