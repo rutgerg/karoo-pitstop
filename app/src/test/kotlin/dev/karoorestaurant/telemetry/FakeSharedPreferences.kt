@@ -4,10 +4,13 @@ import android.content.SharedPreferences
 
 internal class FakeSharedPreferences : SharedPreferences {
 
-    private val storage: MutableMap<String, String?> = mutableMapOf()
+    private val storage: MutableMap<String, Any?> = mutableMapOf()
 
     override fun getString(key: String, defValue: String?): String? =
-        if (storage.containsKey(key)) storage[key] else defValue
+        if (storage.containsKey(key)) storage[key] as String? else defValue
+
+    override fun getInt(key: String, defValue: Int): Int =
+        if (storage.containsKey(key)) storage[key] as Int else defValue
 
     override fun edit(): SharedPreferences.Editor = FakeEditor()
 
@@ -18,7 +21,6 @@ internal class FakeSharedPreferences : SharedPreferences {
     override fun getStringSet(key: String?, defValues: MutableSet<String>?): MutableSet<String>? =
         throw NotImplementedError()
 
-    override fun getInt(key: String?, defValue: Int): Int = throw NotImplementedError()
     override fun getLong(key: String?, defValue: Long): Long = throw NotImplementedError()
     override fun getFloat(key: String?, defValue: Float): Float = throw NotImplementedError()
     override fun getBoolean(key: String?, defValue: Boolean): Boolean = throw NotImplementedError()
@@ -32,11 +34,16 @@ internal class FakeSharedPreferences : SharedPreferences {
     ): Unit = throw NotImplementedError()
 
     private inner class FakeEditor : SharedPreferences.Editor {
-        private val pending = mutableMapOf<String, String?>()
+        private val pending = mutableMapOf<String, Any?>()
         private val removals = mutableSetOf<String>()
         private var clearAll = false
 
         override fun putString(key: String, value: String?): SharedPreferences.Editor {
+            pending[key] = value
+            return this
+        }
+
+        override fun putInt(key: String, value: Int): SharedPreferences.Editor {
             pending[key] = value
             return this
         }
@@ -66,9 +73,6 @@ internal class FakeSharedPreferences : SharedPreferences {
             key: String?,
             values: MutableSet<String>?,
         ): SharedPreferences.Editor = throw NotImplementedError()
-
-        override fun putInt(key: String?, value: Int): SharedPreferences.Editor =
-            throw NotImplementedError()
 
         override fun putLong(key: String?, value: Long): SharedPreferences.Editor =
             throw NotImplementedError()

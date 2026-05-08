@@ -15,7 +15,6 @@ import java.util.TimeZone
 import java.util.concurrent.atomic.AtomicBoolean
 
 internal const val PREFS_NAME = "telemetry"
-internal const val KEY_LAST_SENT_DAY = "last_sent_day"
 
 class Telemetry internal constructor(
     private val prefs: SharedPreferences,
@@ -35,45 +34,46 @@ class Telemetry internal constructor(
     )
 
     private val installId: String = installId(prefs)
-    private val counters = TelemetryCounters()
+    private val counters = TelemetryCounters(prefs)
     private val sending = AtomicBoolean(false)
 
-    init {
-        tryHeartbeat()
-    }
-
     fun recordTileRender() {
-        counters.incrementTileRender()
-        tryHeartbeat()
+        counters.incrementTileRender(todayUtc())
+        trySend()
     }
 
     fun recordPrefetch() {
-        counters.incrementPrefetch()
-        tryHeartbeat()
+        counters.incrementPrefetch(todayUtc())
+        trySend()
     }
 
-    private fun tryHeartbeat() {
+    private fun trySend() {
         if (!canSend()) return
-        val today = todayUtc()
-        if (prefs.getString(KEY_LAST_SENT_DAY, null) == today) return
         if (!sending.compareAndSet(false, true)) return
 
         scope.launch {
             try {
-                if (prefs.getString(KEY_LAST_SENT_DAY, null) == today) return@launch
-                val snapshot = counters.snapshotAndReset()
-                val payload = HeartbeatPayload(
-                    install_id = installId,
-                    day = today,
-                    tile_renders = snapshot.tileRenders,
-                    prefetch_count = snapshot.prefetch,
-                    app_version = BuildConfig.VERSION_NAME,
-                )
-                if (send(payload)) {
-                    prefs.edit().putString(KEY_LAST_SENT_DAY, today).apply()
-                    Log.i(TAG, "heartbeat sent for $today")
-                } else {
-                    counters.restore(snapshot)
+                var lastSent: TelemetryCounters.Snapshot? = null
+                while (true) {
+                    val today = todayUtc()
+                    val snapshot = counters.snapshot(today)
+                    if (snapshot == lastSent) break
+                    val payload = HeartbeatPayload(
+                        install_id = installId,
+                        day = today,
+                        tile_renders = snapshot.tileRenders,
+                        prefetch_count = snapshot.prefetch,
+                        app_version = BuildConfig.VERSION_NAME,
+                    )
+                    if (!send(payload)) {
+                        Log.w(TAG, "heartbeat failed for $today")
+                        break
+                    }
+                    Log.i(
+                        TAG,
+                        "heartbeat sent for $today: tiles=${snapshot.tileRenders} prefetch=${snapshot.prefetch}",
+                    )
+                    lastSent = snapshot
                 }
             } finally {
                 sending.set(false)

@@ -21,16 +21,16 @@ class HeartbeatSender(
         val body = Json.encodeToString(HeartbeatPayload.serializer(), payload)
             .toRequestBody(JSON_MEDIA)
         val request = Request.Builder()
-            .url("$supabaseUrl/rest/v1/heartbeats")
+            .url("$supabaseUrl/rest/v1/heartbeats?on_conflict=install_id,day")
             .header("apikey", anonKey)
             .header("Authorization", "Bearer $anonKey")
-            .header("Prefer", "return=minimal")
+            .header("Prefer", "resolution=merge-duplicates,return=minimal")
             .post(body)
             .build()
         return try {
             http.newCall(request).execute().use { response ->
-                // 201 = inserted; 409 = duplicate (install_id, day) — already submitted, treat as success
-                val ok = response.code == 201 || response.code == 409
+                // 201 = inserted; 200 = merged via on_conflict
+                val ok = response.code == 200 || response.code == 201
                 if (!ok) Log.w(TAG, "heartbeat failed status=${response.code}")
                 ok
             }

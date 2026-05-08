@@ -50,10 +50,10 @@ class HeartbeatSenderTest {
 
         val recorded = server.takeRequest()
         assertEquals("POST", recorded.method)
-        assertEquals("/rest/v1/heartbeats", recorded.path)
+        assertEquals("/rest/v1/heartbeats?on_conflict=install_id,day", recorded.path)
         assertEquals("anon-test-key", recorded.getHeader("apikey"))
         assertEquals("Bearer anon-test-key", recorded.getHeader("Authorization"))
-        assertEquals("return=minimal", recorded.getHeader("Prefer"))
+        assertEquals("resolution=merge-duplicates,return=minimal", recorded.getHeader("Prefer"))
         assertNotNull(recorded.getHeader("Content-Type"))
         assertTrue(recorded.getHeader("Content-Type")!!.startsWith("application/json"))
 
@@ -72,8 +72,8 @@ class HeartbeatSenderTest {
     }
 
     @Test
-    fun `returns true on 409 (duplicate primary key)`() {
-        server.enqueue(MockResponse().setResponseCode(409).setBody("""{"code":"23505"}"""))
+    fun `returns true on 200 OK (merged via on_conflict)`() {
+        server.enqueue(MockResponse().setResponseCode(200))
         assertTrue(sender.send(samplePayload()))
     }
 
