@@ -17,7 +17,8 @@
     <string name="field_none">—</string>
     <string name="notif_cache_success">%1$d POIs cached for %2$s</string>
     <string name="notif_cache_failure">Prefetch failed — check phone connection</string>
-    <string name="settings_telemetry_title">Anonymous usage stats</string>
-    <string name="settings_telemetry_subtitle">Counts of tile renders and route prefetches. No location, no POI names. See Privacy doc for details.</string>
+    <string name="settings_telemetry_title">Anonymous stats</string>
+    <string name="settings_telemetry_subtitle">No locations, routes or POIs are stored; only anonymous usage counts. See privacy doc on Github for details.</string>
     <string name="action_back">Back</string>
+    <string name="settings_version">Version %1$s</string>
 </resources>
