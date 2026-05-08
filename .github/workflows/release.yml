@@ -31,7 +31,7 @@ jobs:
         env:
           GITHUB_USERNAME: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.KAROO_EXT_PAT }}
-        run: ./gradlew :app:assembleDebug
+        run: ./gradlew :app:assembleDebug -Psupabase.url="${{ secrets.SUPABASE_URL }}" -Psupabase.anonKey="${{ secrets.SUPABASE_ANON_KEY }}"
 
       - name: Stage APK with stable name
         run: cp app/build/outputs/apk/debug/app-debug.apk pitstop.apk
