@@ -43,36 +43,36 @@ class HeartbeatSenderTest {
     )
 
     @Test
-    fun `posts JSON payload to heartbeats endpoint with required headers`() {
-        server.enqueue(MockResponse().setResponseCode(201))
+    fun `posts JSON payload to heartbeat_upsert RPC with required headers`() {
+        server.enqueue(MockResponse().setResponseCode(204))
 
         sender.send(samplePayload())
 
         val recorded = server.takeRequest()
         assertEquals("POST", recorded.method)
-        assertEquals("/rest/v1/heartbeats?on_conflict=install_id,day", recorded.path)
+        assertEquals("/rest/v1/rpc/heartbeat_upsert", recorded.path)
         assertEquals("anon-test-key", recorded.getHeader("apikey"))
         assertEquals("Bearer anon-test-key", recorded.getHeader("Authorization"))
-        assertEquals("resolution=merge-duplicates,return=minimal", recorded.getHeader("Prefer"))
+        assertEquals("return=minimal", recorded.getHeader("Prefer"))
         assertNotNull(recorded.getHeader("Content-Type"))
         assertTrue(recorded.getHeader("Content-Type")!!.startsWith("application/json"))
 
         val body = Json.parseToJsonElement(recorded.body.readUtf8()).jsonObject
-        assertEquals("00000000-0000-4000-8000-000000000abc", body["install_id"]?.jsonPrimitive?.content)
-        assertEquals("2026-05-06", body["day"]?.jsonPrimitive?.content)
-        assertEquals("7", body["tile_renders"]?.jsonPrimitive?.content)
-        assertEquals("1", body["prefetch_count"]?.jsonPrimitive?.content)
-        assertEquals("0.1.0-test", body["app_version"]?.jsonPrimitive?.content)
+        assertEquals("00000000-0000-4000-8000-000000000abc", body["p_install_id"]?.jsonPrimitive?.content)
+        assertEquals("2026-05-06", body["p_day"]?.jsonPrimitive?.content)
+        assertEquals("7", body["p_tile_renders"]?.jsonPrimitive?.content)
+        assertEquals("1", body["p_prefetch_count"]?.jsonPrimitive?.content)
+        assertEquals("0.1.0-test", body["p_app_version"]?.jsonPrimitive?.content)
     }
 
     @Test
-    fun `returns true on 201 Created`() {
-        server.enqueue(MockResponse().setResponseCode(201))
+    fun `returns true on 204 No Content (function void return)`() {
+        server.enqueue(MockResponse().setResponseCode(204))
         assertTrue(sender.send(samplePayload()))
     }
 
     @Test
-    fun `returns true on 200 OK (merged via on_conflict)`() {
+    fun `returns true on 200 OK`() {
         server.enqueue(MockResponse().setResponseCode(200))
         assertTrue(sender.send(samplePayload()))
     }
