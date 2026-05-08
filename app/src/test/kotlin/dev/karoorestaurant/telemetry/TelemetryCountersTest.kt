@@ -6,52 +6,56 @@ import org.junit.jupiter.api.Test
 class TelemetryCountersTest {
 
     @Test
-    fun `tile render and prefetch increment independently`() {
-        val counters = TelemetryCounters()
-        counters.incrementTileRender()
-        counters.incrementTileRender()
-        counters.incrementPrefetch()
+    fun `tile render and prefetch increment independently for the same day`() {
+        val counters = TelemetryCounters(FakeSharedPreferences())
+        counters.incrementTileRender("2026-05-08")
+        counters.incrementTileRender("2026-05-08")
+        counters.incrementPrefetch("2026-05-08")
 
-        val snapshot = counters.snapshotAndReset()
+        val snapshot = counters.snapshot("2026-05-08")
         assertEquals(2, snapshot.tileRenders)
         assertEquals(1, snapshot.prefetch)
     }
 
     @Test
-    fun `snapshotAndReset zeros the counters`() {
-        val counters = TelemetryCounters()
-        counters.incrementTileRender()
-        counters.incrementPrefetch()
-        counters.snapshotAndReset()
+    fun `snapshot returns zero when day differs from persisted day`() {
+        val counters = TelemetryCounters(FakeSharedPreferences())
+        counters.incrementTileRender("2026-05-08")
+        counters.incrementPrefetch("2026-05-08")
 
-        val second = counters.snapshotAndReset()
-        assertEquals(0, second.tileRenders)
-        assertEquals(0, second.prefetch)
+        val tomorrow = counters.snapshot("2026-05-09")
+        assertEquals(0, tomorrow.tileRenders)
+        assertEquals(0, tomorrow.prefetch)
     }
 
     @Test
-    fun `restore adds the snapshot back to the live counters`() {
-        val counters = TelemetryCounters()
-        counters.incrementTileRender()
-        counters.incrementPrefetch()
-        val snapshot = counters.snapshotAndReset()
+    fun `incrementing on a new day resets the counters`() {
+        val counters = TelemetryCounters(FakeSharedPreferences())
+        counters.incrementTileRender("2026-05-08")
+        counters.incrementTileRender("2026-05-08")
+        counters.incrementPrefetch("2026-05-08")
 
-        counters.incrementTileRender()
-        counters.restore(snapshot)
+        counters.incrementTileRender("2026-05-09")
 
-        val final = counters.snapshotAndReset()
-        assertEquals(2, final.tileRenders)
-        assertEquals(1, final.prefetch)
+        val today = counters.snapshot("2026-05-09")
+        assertEquals(1, today.tileRenders)
+        assertEquals(0, today.prefetch)
+
+        val yesterday = counters.snapshot("2026-05-08")
+        assertEquals(0, yesterday.tileRenders, "previous day is no longer the persisted day")
     }
 
     @Test
-    fun `restore is a no-op when the snapshot is zero`() {
-        val counters = TelemetryCounters()
-        counters.incrementTileRender()
-        counters.restore(TelemetryCounters.Snapshot(0, 0))
+    fun `counters survive across instances using the same SharedPreferences`() {
+        val prefs = FakeSharedPreferences()
+        TelemetryCounters(prefs).apply {
+            incrementTileRender("2026-05-08")
+            incrementPrefetch("2026-05-08")
+            incrementTileRender("2026-05-08")
+        }
 
-        val snapshot = counters.snapshotAndReset()
-        assertEquals(1, snapshot.tileRenders)
-        assertEquals(0, snapshot.prefetch)
+        val snapshot = TelemetryCounters(prefs).snapshot("2026-05-08")
+        assertEquals(2, snapshot.tileRenders)
+        assertEquals(1, snapshot.prefetch)
     }
 }
