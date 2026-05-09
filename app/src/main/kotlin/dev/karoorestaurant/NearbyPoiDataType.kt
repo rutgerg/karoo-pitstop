@@ -90,11 +90,12 @@ class NearbyPoiDataType(
     }
 
     private fun formatHours(context: Context, pick: PoiNearby): String? {
-        val hoursPart: String = when (pick.status) {
+        val statusWord = when (pick.status) {
             OpeningHours.Status.Open -> context.getString(R.string.hours_open_prefix)
             OpeningHours.Status.Closed -> context.getString(R.string.hours_closed)
             is OpeningHours.Status.Unknown -> context.getString(R.string.hours_unknown)
         }
+        val hoursPart = "${context.getString(R.string.status_prefix)}: $statusWord"
         val unverified = if (pick.staleness == Staleness.AGING) "unverified" else null
         return listOfNotNull(hoursPart, unverified).joinToString(" · ")
     }
