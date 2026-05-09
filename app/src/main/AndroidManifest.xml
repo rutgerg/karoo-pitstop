@@ -16,6 +16,10 @@
         android:theme="@style/Theme.KarooRestaurant"
         android:allowBackup="false">
 
+        <meta-data
+            android:name="io.hammerhead.karooext.MANIFEST_URL"
+            android:value="https://github.com/rutgerg/karoo-pitstop/releases/latest/download/manifest.json" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
