@@ -21,13 +21,15 @@ class TestLocationReceiver : BroadcastReceiver() {
             Log.w(TAG, "TEST_LOCATION missing or unparseable lat/lon strings")
             return
         }
-        (app as KarooRestaurantApp).karoo.injectTestLocation(LatLng(lat, lon))
+        val heading = intent.getStringExtra(EXTRA_HEADING)?.toDoubleOrNull()
+        (app as KarooRestaurantApp).karoo.injectTestLocation(LatLng(lat, lon), heading)
     }
 
     companion object {
         const val ACTION = "dev.karoorestaurant.TEST_LOCATION"
         const val EXTRA_LAT = "lat"
         const val EXTRA_LON = "lon"
+        const val EXTRA_HEADING = "heading"
         private const val TAG = "TestLocationRcvr"
     }
 }
