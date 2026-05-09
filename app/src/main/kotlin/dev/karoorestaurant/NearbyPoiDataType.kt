@@ -70,23 +70,8 @@ class NearbyPoiDataType(
             views.setViewVisibility(R.id.poi_hours, View.VISIBLE)
         }
 
-        // Spike for issue #63: route tile tap to BrowsePoisActivity to verify
-        // PendingIntent.getActivity is honored from a RemoteViews click on Karoo.
-        views.setOnClickPendingIntent(R.id.poi_root, buildBrowsePendingIntent(context))
+        views.setOnClickPendingIntent(R.id.poi_root, pick?.let { buildLaunchPendingIntent(context, it.poi) })
         return views
-    }
-
-    private fun buildBrowsePendingIntent(context: Context): PendingIntent {
-        val intent = Intent(context, BrowsePoisActivity::class.java).apply {
-            putExtra(BrowsePoisActivity.EXTRA_CATEGORY, category.name)
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-        }
-        return PendingIntent.getActivity(
-            context,
-            category.ordinal,
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-        )
     }
 
     private fun formatHours(context: Context, pick: PoiNearby): String? {
