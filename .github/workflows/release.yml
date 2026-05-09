@@ -36,7 +36,39 @@ jobs:
       - name: Stage APK with stable name
         run: cp app/build/outputs/apk/debug/app-debug.apk pitstop.apk
 
-      - name: Attach APK to release
+      - name: Generate manifest.json
+        run: |
+          TAG=$(git describe --tags --abbrev=0 --match 'v*')
+          VERSION="${TAG#v}"
+          IFS='.' read -r MAJOR MINOR PATCH <<< "${VERSION%%-*}"
+          VERSION_CODE=$((10#$MAJOR * 10000 + 10#$MINOR * 100 + 10#$PATCH))
+          DESCRIPTION="$(cat docs/about.md)"
+          RELEASE_NOTES="$(awk -v ver="## $VERSION" '
+            $0 == ver { capture = 1; next }
+            capture && /^## / { exit }
+            capture { print }
+          ' docs/release-notes.md | sed -e '/./,$!d' -e :a -e '/^$/{$d;N;ba' -e '}')"
+          if [ -z "$RELEASE_NOTES" ]; then
+            echo "::error::No '## $VERSION' section found in docs/release-notes.md. Add a user-facing entry before tagging." >&2
+            exit 1
+          fi
+          jq -n \
+            --arg label "Pitstop" \
+            --arg packageName "dev.karoorestaurant" \
+            --arg latestApkUrl "https://github.com/${{ github.repository }}/releases/latest/download/pitstop.apk" \
+            --arg latestVersion "$VERSION" \
+            --argjson latestVersionCode "$VERSION_CODE" \
+            --arg developer "Rutger Geelen" \
+            --arg description "$DESCRIPTION" \
+            --arg releaseNotes "$RELEASE_NOTES" \
+            --arg screenshot "https://raw.githubusercontent.com/${{ github.repository }}/${TAG}/docs/screenshot-karoo-tiles.png" \
+            '{label:$label, packageName:$packageName, latestApkUrl:$latestApkUrl, latestVersion:$latestVersion, latestVersionCode:$latestVersionCode, developer:$developer, description:$description, releaseNotes:$releaseNotes, screenshotUrls:[$screenshot]}' \
+            > manifest.json
+          cat manifest.json
+
+      - name: Attach APK and manifest to release
         uses: softprops/action-gh-release@v3
         with:
-          files: pitstop.apk
+          files: |
+            pitstop.apk
+            manifest.json
