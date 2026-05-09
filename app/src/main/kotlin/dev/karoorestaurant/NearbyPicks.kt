@@ -13,13 +13,11 @@ internal fun computeNearbyPicks(karoo: KarooClient, center: LatLng): List<PoiNea
     val store = karoo.store()
     return PoiCategory.values().mapNotNull { category ->
         val candidates = store.nearest(center, category, maxMeters = 30_000.0, limit = 50, now = nowInstant)
-        candidates.firstNotNullOfOrNull { hit ->
-            val status = OpeningHours.evaluate(hit.poi.openingHoursTag, nowLdt)
-            if (status is OpeningHours.Status.Closed) null
-            else PoiNearby(
+        candidates.firstOrNull()?.let { hit ->
+            PoiNearby(
                 poi = hit.poi,
                 distanceMeters = hit.distanceMeters,
-                status = status,
+                status = OpeningHours.evaluate(hit.poi.openingHoursTag, nowLdt),
                 staleness = stalenessOf(hit.fetchedAt, nowInstant),
             )
         }

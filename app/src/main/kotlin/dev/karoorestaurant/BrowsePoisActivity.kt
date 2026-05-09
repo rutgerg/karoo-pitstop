@@ -157,13 +157,11 @@ private fun PoiRow(row: BrowseRow, onClick: () -> Unit) {
                 style = MaterialTheme.typography.bodyLarge,
                 maxLines = 2,
             )
-            statusLabel(row.status)?.let { label ->
-                Text(
-                    text = label,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
+            Text(
+                text = statusLabel(row.status),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
         Text(
             text = formatDistance(row.distanceMeters),
@@ -173,11 +171,10 @@ private fun PoiRow(row: BrowseRow, onClick: () -> Unit) {
 }
 
 @Composable
-private fun statusLabel(status: OpeningHours.Status): String? = when (status) {
+private fun statusLabel(status: OpeningHours.Status): String = when (status) {
     OpeningHours.Status.Open -> stringResource(R.string.hours_open_prefix)
-    is OpeningHours.Status.Unknown -> stringResource(R.string.hours_open_prefix) +
-        ": " + stringResource(R.string.hours_unknown)
-    OpeningHours.Status.Closed -> null
+    OpeningHours.Status.Closed -> stringResource(R.string.hours_closed)
+    is OpeningHours.Status.Unknown -> stringResource(R.string.hours_unknown)
 }
 
 private fun formatDistance(meters: Double): String =

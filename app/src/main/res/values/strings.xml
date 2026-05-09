@@ -12,7 +12,8 @@
     <string name="category_atm">ATM</string>
     <string name="data_type_nearby_description">Nearest along the route</string>
     <string name="hours_open_prefix">Open</string>
-    <string name="hours_unknown">unknown</string>
+    <string name="hours_closed">Closed</string>
+    <string name="hours_unknown">Unknown</string>
     <string name="field_waiting">Waiting for GPS…</string>
     <string name="field_none">—</string>
     <string name="notif_cache_success">%1$d POIs cached for %2$s</string>
