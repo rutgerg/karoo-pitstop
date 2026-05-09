@@ -3,6 +3,10 @@ package dev.karoorestaurant
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
+import android.text.SpannableString
+import android.text.Spanned
+import android.text.style.ForegroundColorSpan
 import android.view.View
 import android.widget.RemoteViews
 import dev.karoorestaurant.data.poi.OpeningHours
@@ -116,10 +120,19 @@ class NearbyPoiDataType(
     private fun formatDistance(meters: Double): String =
         if (meters < 1000.0) "${meters.toInt()} m" else "%.1f km".format(meters / 1000.0)
 
-    private fun buildPoiLine(pick: PoiNearby, rider: RiderLocation?): String {
+    private fun buildPoiLine(pick: PoiNearby, rider: RiderLocation?): CharSequence {
         val arrow = directionArrow(pick, rider)
-        val prefix = if (arrow != null) "$arrow " else ""
-        return "$prefix${formatDistance(pick.distanceMeters)}  ${pick.poi.name}"
+        val tail = "${formatDistance(pick.distanceMeters)}  ${pick.poi.name}"
+        if (arrow == null) return tail
+        val full = "$arrow $tail"
+        return SpannableString(full).apply {
+            setSpan(
+                ForegroundColorSpan(ARROW_COLOR),
+                0,
+                1,
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
+            )
+        }
     }
 
     private fun directionArrow(pick: PoiNearby, rider: RiderLocation?): Char? {
@@ -129,6 +142,7 @@ class NearbyPoiDataType(
     }
 
     companion object {
+        private val ARROW_COLOR = Color.parseColor("#3B9EFF")
         const val TYPE_RESTAURANT = "nearby_restaurant"
         const val TYPE_SUPERMARKET = "nearby_supermarket"
         const val TYPE_FUEL = "nearby_fuel"
