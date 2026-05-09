@@ -51,6 +51,18 @@ android {
         )
     }
 
+    signingConfigs {
+        getByName("debug") {
+            val keystore = file("pitstop-debug.jks")
+            if (keystore.exists()) {
+                storeFile = keystore
+                storePassword = "android"
+                keyAlias = "pitstop"
+                keyPassword = "android"
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
