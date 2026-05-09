@@ -51,6 +51,8 @@ Pitstop is built for situations where the route is set but the next stop is unde
    adb install pitstop.apk
    ```
 
+   If the install fails with `INSTALL_FAILED_UPDATE_INCOMPATIBLE`, you have a pre-v1.2.0 build installed with the old signing key. Uninstall it once (`adb uninstall dev.karoorestaurant`) and re-run the install. Subsequent updates will work in place.
+
 4. Reboot the Karoo. The App Store binds the extension as **Pitstop** and the nine data types appear in the Karoo Pages data-type picker. Add any combination of **Restaurant**, **Supermarket**, **Fuel**, **Cafe**, **Hotel**, **Doctor**, **Pharmacy**, **Bike Shop**, and **ATM** tiles to a ride profile page; that page is the on-device entry point. There is no app-drawer icon — see [Karoo platform notes](docs/karoo-platform-notes.md) for why.
 
 ## Build from source
