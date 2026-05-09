@@ -86,17 +86,13 @@ class NearbyPoiDataType(
     }
 
     private fun formatHours(context: Context, pick: PoiNearby): String? {
-        val openLabel = context.getString(R.string.hours_open_prefix)
-        val hoursPart: String? = when (pick.status) {
-            OpeningHours.Status.Open -> {
-                val tag = pick.poi.openingHoursTag
-                if (tag.isNullOrBlank()) openLabel else "$openLabel: $tag"
-            }
-            is OpeningHours.Status.Unknown -> "$openLabel: ${context.getString(R.string.hours_unknown)}"
-            OpeningHours.Status.Closed -> null
+        val hoursPart: String = when (pick.status) {
+            OpeningHours.Status.Open -> context.getString(R.string.hours_open_prefix)
+            OpeningHours.Status.Closed -> context.getString(R.string.hours_closed)
+            is OpeningHours.Status.Unknown -> context.getString(R.string.hours_unknown)
         }
         val unverified = if (pick.staleness == Staleness.AGING) "unverified" else null
-        return listOfNotNull(hoursPart, unverified).joinToString(" · ").ifBlank { null }
+        return listOfNotNull(hoursPart, unverified).joinToString(" · ")
     }
 
     private fun buildLaunchPendingIntent(context: Context, poi: Poi): PendingIntent {
