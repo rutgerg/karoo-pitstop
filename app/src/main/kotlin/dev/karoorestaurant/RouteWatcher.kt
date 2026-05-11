@@ -1,6 +1,7 @@
 package dev.karoorestaurant
 
 import android.util.Log
+import dev.karoorestaurant.data.route.CorridorSlicer
 import dev.karoorestaurant.data.route.Route
 import dev.karoorestaurant.telemetry.Telemetry
 import kotlinx.coroutines.CoroutineScope
@@ -20,6 +21,7 @@ class RouteWatcher(
     private val retryCooldownMs: Long = DEFAULT_RETRY_COOLDOWN_MS,
     private val maxAttempts: Int = DEFAULT_MAX_ATTEMPTS,
     private val telemetry: Telemetry? = null,
+    private val diary: FetchDiary? = null,
 ) {
 
     private val _state = MutableStateFlow<RouteFetchState>(RouteFetchState.Idle)
@@ -42,12 +44,17 @@ class RouteWatcher(
             return
         }
 
+        val windowCount = CorridorSlicer.windows(route.polyline).size
         var attempts = 0
         while (attempts < maxAttempts) {
             attempts++
-            if (fetchOnce(route, attempts)) return
+            if (fetchOnce(route, attempts)) {
+                recordOutcome(route, windowCount, attempts)
+                return
+            }
             if (attempts >= maxAttempts) {
                 Log.w(TAG, "giving up on ${route.name} after $maxAttempts attempts")
+                recordOutcome(route, windowCount, attempts)
                 return
             }
             // Wait at least the cooldown, then for the next location signal — whichever
@@ -56,6 +63,33 @@ class RouteWatcher(
             Log.i(TAG, "waiting for next location event before retrying ${route.name}")
             karoo.locationFlow.first()
         }
+    }
+
+    private fun recordOutcome(route: Route, windowCount: Int, attempts: Int) {
+        val diary = diary ?: return
+        val first = route.polyline.firstOrNull()
+        val last = route.polyline.lastOrNull()
+        val base = FetchDiary.Entry(
+            routeName = route.name,
+            routeId = route.id,
+            polylineLength = route.polyline.size,
+            polylineStartLat = first?.lat,
+            polylineStartLon = first?.lon,
+            polylineEndLat = last?.lat,
+            polylineEndLon = last?.lon,
+            windowCount = windowCount,
+            attempts = attempts,
+            status = FetchDiary.Status.ERROR,
+        )
+        val entry = when (val s = _state.value) {
+            is RouteFetchState.Cached -> base.copy(
+                status = FetchDiary.Status.SUCCESS,
+                poisFetched = s.poiCount,
+            )
+            is RouteFetchState.Error -> base.copy(errorMessage = s.message)
+            else -> return
+        }
+        diary.record(entry)
     }
 
     private suspend fun fetchOnce(route: Route, attempt: Int): Boolean {
