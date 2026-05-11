@@ -5,13 +5,17 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:gravity="top"
-    android:padding="2dp">
+    android:paddingTop="0dp"
+    android:paddingStart="2dp"
+    android:paddingEnd="2dp"
+    android:paddingBottom="1dp">
 
     <TextView
         android:id="@+id/poi_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center"
+        android:gravity="start|center_vertical"
+        android:includeFontPadding="false"
         android:textSize="18sp"
         android:textColor="#FFFFFFFF"
         android:singleLine="true"
@@ -22,6 +26,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
+        android:includeFontPadding="false"
         android:textSize="12sp"
         android:textColor="#FFCCCCCC"
         android:singleLine="true"

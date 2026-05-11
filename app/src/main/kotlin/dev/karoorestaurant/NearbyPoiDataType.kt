@@ -7,6 +7,7 @@ import android.graphics.Color
 import android.text.SpannableString
 import android.text.Spanned
 import android.text.style.ForegroundColorSpan
+import android.text.style.RelativeSizeSpan
 import android.view.View
 import android.widget.RemoteViews
 import dev.karoorestaurant.data.poi.OpeningHours
@@ -127,6 +128,12 @@ class NearbyPoiDataType(
         val full = "$arrow $tail"
         return SpannableString(full).apply {
             setSpan(
+                RelativeSizeSpan(ARROW_SCALE),
+                0,
+                1,
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
+            )
+            setSpan(
                 ForegroundColorSpan(ARROW_COLOR),
                 0,
                 1,
@@ -143,6 +150,7 @@ class NearbyPoiDataType(
 
     companion object {
         private val ARROW_COLOR = Color.parseColor("#3B9EFF")
+        private const val ARROW_SCALE = 1.5f
         const val TYPE_RESTAURANT = "nearby_restaurant"
         const val TYPE_SUPERMARKET = "nearby_supermarket"
         const val TYPE_FUEL = "nearby_fuel"
