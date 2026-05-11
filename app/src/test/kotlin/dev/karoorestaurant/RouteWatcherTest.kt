@@ -15,6 +15,7 @@ import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
@@ -341,6 +342,51 @@ class RouteWatcherTest {
         advanceUntilIdle()
 
         assertEquals(0, fetchCount)
+    }
+
+    @Test
+    fun `same route re-emitted after a terminal failure triggers a fresh fetch`() = runTest {
+        // Matches today's diary: route loads, fetch fails all maxAttempts (DNS down),
+        // rider re-loads the same route a minute later, second fetch succeeds.
+        val port = FakeKarooSystemPort()
+        val store = InMemoryPoiStore()
+        var fetchCount = 0
+        val client = KarooClient(port, store, overpass = { _, _, _ ->
+            fetchCount++
+            if (fetchCount <= 3) error("DNS unavailable") else fixturePois
+        })
+        val watcherScope = CoroutineScope(SupervisorJob() + UnconfinedTestDispatcher(testScheduler))
+        val watcher = RouteWatcher(
+            client,
+            scope = watcherScope,
+            retryCooldownMs = 100L,
+            maxAttempts = 3,
+        )
+        watcher.start()
+
+        port.emitNavigationState(navigatingRoute(testPolyline))
+        advanceTimeBy(150L)
+        port.emitLocation(OnLocationChanged(52.0, 4.0, null))
+        advanceTimeBy(150L)
+        port.emitLocation(OnLocationChanged(52.0, 4.0, null))
+        advanceUntilIdle()
+        assertEquals(3, fetchCount, "first emit exhausts maxAttempts")
+        assertTrue(watcher.state.value is RouteFetchState.Error)
+        assertFalse(
+            store.wasRouteFetched(testPolyline.hashCode().toString()),
+            "terminal failure must not record the route as fetched",
+        )
+
+        // Idle in between is what allows distinctUntilChangedBy { it?.id } to let the
+        // same route id through on re-emit.
+        port.emitNavigationState(OnNavigationState(OnNavigationState.NavigationState.Idle))
+        advanceUntilIdle()
+        port.emitNavigationState(navigatingRoute(testPolyline))
+        advanceUntilIdle()
+
+        assertEquals(4, fetchCount, "re-emit after Idle must trigger a fresh attempt on the same route")
+        assertTrue(watcher.state.value is RouteFetchState.Cached)
+        assertTrue(store.wasRouteFetched(testPolyline.hashCode().toString()))
     }
 
     @Test
