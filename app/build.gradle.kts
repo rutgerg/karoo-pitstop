@@ -16,6 +16,16 @@ fun gitVersionName(): String = try {
     "0.0.0-dev"
 }
 
+fun gitShortSha(): String = try {
+    val process = ProcessBuilder("git", "rev-parse", "--short=7", "HEAD")
+        .redirectErrorStream(true)
+        .start()
+    val output = process.inputStream.bufferedReader().readText().trim()
+    if (process.waitFor() != 0 || output.isEmpty()) "unknown" else output
+} catch (e: Exception) {
+    "unknown"
+}
+
 fun versionCodeFromName(name: String): Int {
     val parts = name.substringBefore("-").split(".")
     if (parts.size != 3) return 1
@@ -49,6 +59,7 @@ android {
             "SUPABASE_ANON_KEY",
             "\"${project.findProperty("supabase.anonKey") ?: ""}\"",
         )
+        buildConfigField("String", "GIT_SHA", "\"${gitShortSha()}\"")
     }
 
     signingConfigs {

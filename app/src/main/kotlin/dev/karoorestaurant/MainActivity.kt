@@ -87,8 +87,13 @@ private fun SettingsScreen(
                     contentDescription = stringResource(R.string.action_back),
                 )
             }
+            val versionLabel = if (BuildConfig.DEBUG) {
+                "${BuildConfig.VERSION_NAME}-${BuildConfig.GIT_SHA}"
+            } else {
+                BuildConfig.VERSION_NAME
+            }
             Text(
-                stringResource(R.string.settings_version, BuildConfig.VERSION_NAME),
+                stringResource(R.string.settings_version, versionLabel),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier
