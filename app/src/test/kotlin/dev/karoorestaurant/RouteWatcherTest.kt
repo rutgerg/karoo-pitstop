@@ -8,6 +8,8 @@ import io.hammerhead.karooext.models.OnNavigationState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -263,6 +265,85 @@ class RouteWatcherTest {
     }
 
     @Test
+    fun `retries fetch when connectivity becomes available after error state`() = runTest {
+        val port = FakeKarooSystemPort()
+        val store = InMemoryPoiStore()
+        var fetchCount = 0
+        val client = KarooClient(port, store, overpass = { _, _, _ ->
+            fetchCount++
+            if (fetchCount <= 3) error("offline") else fixturePois
+        })
+        val connectivity = FakeConnectivityWatcher()
+        val watcherScope = CoroutineScope(SupervisorJob() + UnconfinedTestDispatcher(testScheduler))
+        val watcher = RouteWatcher(
+            client,
+            scope = watcherScope,
+            retryCooldownMs = 100L,
+            maxAttempts = 3,
+            connectivity = connectivity,
+        )
+        watcher.start()
+
+        port.emitNavigationState(navigatingRoute(testPolyline))
+        advanceTimeBy(150L)
+        port.emitLocation(OnLocationChanged(52.0, 4.0, null))
+        advanceTimeBy(150L)
+        port.emitLocation(OnLocationChanged(52.0, 4.0, null))
+        advanceUntilIdle()
+        assertEquals(3, fetchCount)
+        assertTrue(watcher.state.value is RouteFetchState.Error)
+
+        connectivity.emitAvailable()
+        advanceUntilIdle()
+
+        assertEquals(4, fetchCount, "network availability must retrigger the fetch from error state")
+        assertTrue(watcher.state.value is RouteFetchState.Cached)
+    }
+
+    @Test
+    fun `ignores connectivity events when not in error state`() = runTest {
+        val port = FakeKarooSystemPort()
+        val store = InMemoryPoiStore()
+        var fetchCount = 0
+        val client = KarooClient(port, store, overpass = { _, _, _ ->
+            fetchCount++
+            fixturePois
+        })
+        val connectivity = FakeConnectivityWatcher()
+        val watcherScope = CoroutineScope(SupervisorJob() + UnconfinedTestDispatcher(testScheduler))
+        RouteWatcher(client, scope = watcherScope, connectivity = connectivity).start()
+
+        port.emitNavigationState(navigatingRoute(testPolyline))
+        advanceUntilIdle()
+        assertEquals(1, fetchCount)
+
+        connectivity.emitAvailable()
+        connectivity.emitAvailable()
+        advanceUntilIdle()
+
+        assertEquals(1, fetchCount, "connectivity events must not refetch a cached route")
+    }
+
+    @Test
+    fun `ignores connectivity events when no route has been loaded`() = runTest {
+        val port = FakeKarooSystemPort()
+        val store = InMemoryPoiStore()
+        var fetchCount = 0
+        val client = KarooClient(port, store, overpass = { _, _, _ ->
+            fetchCount++
+            fixturePois
+        })
+        val connectivity = FakeConnectivityWatcher()
+        val watcherScope = CoroutineScope(SupervisorJob() + UnconfinedTestDispatcher(testScheduler))
+        RouteWatcher(client, scope = watcherScope, connectivity = connectivity).start()
+
+        connectivity.emitAvailable()
+        advanceUntilIdle()
+
+        assertEquals(0, fetchCount)
+    }
+
+    @Test
     fun `refetches when a different route is emitted`() = runTest {
         val port = FakeKarooSystemPort()
         val store = InMemoryPoiStore()
@@ -285,5 +366,13 @@ class RouteWatcherTest {
         assertNotEquals(testPolyline.hashCode(), otherPolyline.hashCode())
         assertTrue(store.wasRouteFetched(testPolyline.hashCode().toString()))
         assertTrue(store.wasRouteFetched(otherPolyline.hashCode().toString()))
+    }
+
+    private class FakeConnectivityWatcher : ConnectivityWatcher {
+        private val events = MutableSharedFlow<Unit>(extraBufferCapacity = 8)
+        override val onAvailable: Flow<Unit> = events
+        fun emitAvailable() {
+            events.tryEmit(Unit)
+        }
     }
 }

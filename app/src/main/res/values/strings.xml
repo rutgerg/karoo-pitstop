@@ -17,7 +17,7 @@
     <string name="hours_unknown">Unknown</string>
     <string name="field_waiting">Waiting for GPS…</string>
     <string name="field_none">—</string>
-    <string name="field_fetch_failed">POI fetch failed</string>
+    <string name="field_waiting_for_wifi">Waiting for Wi-Fi…</string>
     <string name="notif_cache_success">%1$d POIs cached for %2$s</string>
     <string name="notif_cache_failure">Prefetch failed — check phone connection</string>
     <string name="settings_telemetry_title">Anonymous stats</string>
