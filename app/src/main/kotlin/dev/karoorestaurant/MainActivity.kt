@@ -88,7 +88,7 @@ private fun SettingsScreen(
                 )
             }
             val versionLabel = if (BuildConfig.DEBUG) {
-                "${BuildConfig.VERSION_NAME}-${BuildConfig.GIT_SHA}"
+                "${BuildConfig.VERSION_NAME}-${stringResource(R.string.git_sha)}"
             } else {
                 BuildConfig.VERSION_NAME
             }

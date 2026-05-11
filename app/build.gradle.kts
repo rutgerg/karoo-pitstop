@@ -59,7 +59,11 @@ android {
             "SUPABASE_ANON_KEY",
             "\"${project.findProperty("supabase.anonKey") ?: ""}\"",
         )
-        buildConfigField("String", "GIT_SHA", "\"${gitShortSha()}\"")
+        // Use resValue, not buildConfigField — `public static final String` constants
+        // get inlined into consumer .class files at compile time, so when only the SHA
+        // changes between builds the cached MainActivity.class keeps the old folded
+        // literal. String resources are read from resources.arsc at runtime instead.
+        resValue("string", "git_sha", gitShortSha())
     }
 
     signingConfigs {
