@@ -20,17 +20,21 @@ class KarooRestaurantApp : Application() {
     lateinit var telemetry: Telemetry
         private set
 
+    lateinit var fetchDiary: FetchDiary
+        private set
+
     override fun onCreate() {
         super.onCreate()
         settings = SettingsRepository(this)
         telemetry = Telemetry(this, telemetryEnabled = { settings.telemetryEnabled.value })
+        fetchDiary = FetchDiary(this)
         val systemPort = RealKarooSystemPort(this)
         karoo = KarooClient(
             karooSystem = systemPort,
             store = AndroidPoiStore(this),
             overpass = OverpassClient(),
         )
-        routeWatcher = RouteWatcher(karoo, telemetry = telemetry).also { it.start() }
+        routeWatcher = RouteWatcher(karoo, telemetry = telemetry, diary = fetchDiary).also { it.start() }
 
         CacheStateNotifier(
             systemPort = systemPort,

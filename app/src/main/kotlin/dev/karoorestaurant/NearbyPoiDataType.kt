@@ -22,6 +22,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.sample
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -31,6 +34,7 @@ class NearbyPoiDataType(
     private val karoo: KarooClient,
     private val category: PoiCategory,
     typeId: String,
+    private val routeFetchState: StateFlow<RouteFetchState> = MutableStateFlow(RouteFetchState.Idle),
 ) : DataTypeImpl(extension = RestaurantExtensionService.EXTENSION_ID, typeId = typeId) {
 
     override fun startView(context: Context, config: ViewConfig, emitter: ViewEmitter) {
@@ -42,7 +46,16 @@ class NearbyPoiDataType(
         emitter.updateView(buildView(context, pick = null, rider = null, placeholderRes = R.string.field_waiting))
 
         scope.launch {
-            karoo.locationFlow.sample(SAMPLE_MS).collect { rider ->
+            combine(
+                karoo.locationFlow.sample(SAMPLE_MS),
+                routeFetchState,
+            ) { rider, state -> rider to state }.collect { (rider, state) ->
+                if (state is RouteFetchState.Error) {
+                    emitter.updateView(
+                        buildView(context, pick = null, rider = rider, placeholderRes = R.string.field_fetch_failed),
+                    )
+                    return@collect
+                }
                 val pick = withContext(Dispatchers.IO) {
                     computeNearbyPicks(karoo, rider.point).firstOrNull { it.poi.category == category }
                 }

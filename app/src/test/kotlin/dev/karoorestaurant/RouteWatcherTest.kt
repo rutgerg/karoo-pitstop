@@ -2,6 +2,7 @@ package dev.karoorestaurant
 
 import dev.karoorestaurant.data.poi.Poi
 import dev.karoorestaurant.data.poi.PoiCategory
+import dev.karoorestaurant.telemetry.FakeSharedPreferences
 import io.hammerhead.karooext.models.OnLocationChanged
 import io.hammerhead.karooext.models.OnNavigationState
 import kotlinx.coroutines.CoroutineScope
@@ -13,6 +14,8 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
@@ -185,6 +188,78 @@ class RouteWatcherTest {
         advanceTimeBy(60L)
         port.emitLocation(OnLocationChanged(52.0, 4.0, null))
         assertEquals(2, fetchCount)
+    }
+
+    @Test
+    fun `diary records a success entry after a successful fetch`() = runTest {
+        val port = FakeKarooSystemPort()
+        val store = InMemoryPoiStore()
+        val client = KarooClient(port, store, overpass = { _, _, _ -> fixturePois })
+        val diary = FetchDiary(FakeSharedPreferences(), nowEpochMillis = { 1L })
+        val watcherScope = CoroutineScope(SupervisorJob() + UnconfinedTestDispatcher(testScheduler))
+        RouteWatcher(client, scope = watcherScope, diary = diary).start()
+
+        port.emitNavigationState(navigatingRoute(testPolyline, name = "Diary Route"))
+        advanceUntilIdle()
+
+        val entries = diary.recent()
+        assertEquals(1, entries.size)
+        val entry = entries.single()
+        assertEquals(FetchDiary.Status.SUCCESS, entry.status)
+        assertEquals("Diary Route", entry.routeName)
+        assertEquals(1, entry.attempts)
+        assertEquals(fixturePois.size, entry.poisFetched)
+        assertNull(entry.errorMessage)
+        assertNotNull(entry.polylineStartLat)
+        assertNotNull(entry.polylineEndLat)
+    }
+
+    @Test
+    fun `diary records a single error entry after maxAttempts failures`() = runTest {
+        val port = FakeKarooSystemPort()
+        val store = InMemoryPoiStore()
+        val client = KarooClient(port, store, overpass = { _, _, _ -> error("Overpass 429") })
+        val diary = FetchDiary(FakeSharedPreferences(), nowEpochMillis = { 1L })
+        val watcherScope = CoroutineScope(SupervisorJob() + UnconfinedTestDispatcher(testScheduler))
+        RouteWatcher(
+            client,
+            scope = watcherScope,
+            retryCooldownMs = 100L,
+            maxAttempts = 3,
+            diary = diary,
+        ).start()
+
+        port.emitNavigationState(navigatingRoute(testPolyline))
+        advanceTimeBy(150L)
+        port.emitLocation(OnLocationChanged(52.0, 4.0, null))
+        advanceTimeBy(150L)
+        port.emitLocation(OnLocationChanged(52.0, 4.0, null))
+        advanceUntilIdle()
+
+        val entries = diary.recent()
+        assertEquals(1, entries.size, "retries collapse into a single terminal diary entry")
+        val entry = entries.single()
+        assertEquals(FetchDiary.Status.ERROR, entry.status)
+        assertEquals(3, entry.attempts)
+        assertTrue(entry.errorMessage!!.contains("Overpass 429"))
+        assertNull(entry.poisFetched)
+    }
+
+    @Test
+    fun `diary records nothing when route was already cached`() = runTest {
+        val port = FakeKarooSystemPort()
+        val store = InMemoryPoiStore()
+        // Pre-mark the route as fetched so handleRoute short-circuits.
+        store.recordRouteFetch(testPolyline.hashCode().toString())
+        val client = KarooClient(port, store, overpass = { _, _, _ -> fixturePois })
+        val diary = FetchDiary(FakeSharedPreferences(), nowEpochMillis = { 1L })
+        val watcherScope = CoroutineScope(SupervisorJob() + UnconfinedTestDispatcher(testScheduler))
+        RouteWatcher(client, scope = watcherScope, diary = diary).start()
+
+        port.emitNavigationState(navigatingRoute(testPolyline))
+        advanceUntilIdle()
+
+        assertEquals(emptyList<FetchDiary.Entry>(), diary.recent())
     }
 
     @Test
