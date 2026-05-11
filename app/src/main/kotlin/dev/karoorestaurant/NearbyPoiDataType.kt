@@ -52,7 +52,7 @@ class NearbyPoiDataType(
             ) { rider, state -> rider to state }.collect { (rider, state) ->
                 if (state is RouteFetchState.Error) {
                     emitter.updateView(
-                        buildView(context, pick = null, rider = rider, placeholderRes = R.string.field_fetch_failed),
+                        buildView(context, pick = null, rider = rider, placeholderRes = R.string.field_waiting_for_wifi),
                     )
                     return@collect
                 }

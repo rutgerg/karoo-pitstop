@@ -8,11 +8,15 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 
 class RouteWatcher(
@@ -22,14 +26,32 @@ class RouteWatcher(
     private val maxAttempts: Int = DEFAULT_MAX_ATTEMPTS,
     private val telemetry: Telemetry? = null,
     private val diary: FetchDiary? = null,
+    private val connectivity: ConnectivityWatcher? = null,
 ) {
 
     private val _state = MutableStateFlow<RouteFetchState>(RouteFetchState.Idle)
     val state: StateFlow<RouteFetchState> = _state.asStateFlow()
 
+    private val retryTrigger = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+
+    @Volatile
+    private var lastRoute: Route? = null
+
     fun start() {
         scope.launch {
-            karoo.routeFlow.collectLatest { route -> handleRoute(route) }
+            merge(
+                karoo.routeFlow.onEach { lastRoute = it },
+                retryTrigger.mapNotNull { lastRoute },
+            ).collectLatest { route -> handleRoute(route) }
+        }
+        val connectivity = connectivity ?: return
+        scope.launch {
+            connectivity.onAvailable.collect {
+                if (_state.value is RouteFetchState.Error && lastRoute != null) {
+                    Log.i(TAG, "network available, retrying ${lastRoute?.name}")
+                    retryTrigger.tryEmit(Unit)
+                }
+            }
         }
     }
 

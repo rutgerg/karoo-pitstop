@@ -34,7 +34,12 @@ class KarooRestaurantApp : Application() {
             store = AndroidPoiStore(this),
             overpass = OverpassClient(),
         )
-        routeWatcher = RouteWatcher(karoo, telemetry = telemetry, diary = fetchDiary).also { it.start() }
+        routeWatcher = RouteWatcher(
+            karoo,
+            telemetry = telemetry,
+            diary = fetchDiary,
+            connectivity = AndroidConnectivityWatcher(this),
+        ).also { it.start() }
 
         CacheStateNotifier(
             systemPort = systemPort,
