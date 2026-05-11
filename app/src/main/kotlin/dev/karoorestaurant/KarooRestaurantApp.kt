@@ -23,6 +23,9 @@ class KarooRestaurantApp : Application() {
     lateinit var fetchDiary: FetchDiary
         private set
 
+        lateinit var periodicRefresh: PeriodicRefresh
+        private set
+
     override fun onCreate() {
         super.onCreate()
         settings = SettingsRepository(this)
@@ -40,6 +43,8 @@ class KarooRestaurantApp : Application() {
             diary = fetchDiary,
             connectivity = AndroidConnectivityWatcher(this),
         ).also { it.start() }
+
+        periodicRefresh = PeriodicRefresh(karoo).also { it.start() }
 
         CacheStateNotifier(
             systemPort = systemPort,
