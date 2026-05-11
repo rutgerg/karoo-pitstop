@@ -37,6 +37,7 @@ class FetchDiary internal constructor(
     @Serializable
     data class Entry(
         val atEpochMillis: Long = 0L,
+        val kind: Kind = Kind.ROUTE,
         val routeName: String,
         val routeId: String,
         val polylineLength: Int,
@@ -53,6 +54,9 @@ class FetchDiary internal constructor(
 
     @Serializable
     enum class Status { SUCCESS, ERROR }
+
+    @Serializable
+    enum class Kind { ROUTE, PERIODIC }
 
     companion object {
         private const val PREFS_NAME = "fetch_diary"

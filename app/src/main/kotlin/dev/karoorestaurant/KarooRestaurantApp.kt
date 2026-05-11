@@ -44,7 +44,7 @@ class KarooRestaurantApp : Application() {
             connectivity = AndroidConnectivityWatcher(this),
         ).also { it.start() }
 
-        periodicRefresh = PeriodicRefresh(karoo).also { it.start() }
+        periodicRefresh = PeriodicRefresh(karoo, diary = fetchDiary).also { it.start() }
 
         CacheStateNotifier(
             systemPort = systemPort,
