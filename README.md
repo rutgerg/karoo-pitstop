@@ -1,6 +1,6 @@
 # Pitstop
 
-An Android app for the Hammerhead Karoo 3 that surfaces the **nearest open restaurant, supermarket, and fuel station** along a planned route, and routes you there in two taps via the Karoo's built-in navigation.
+An extension for the Hammerhead Karoo that surfaces the **nearest open service** along a planned route, and routes you there in two taps via the Karoo's built-in navigation. Pick any combination of nine categories — **restaurant, supermarket, fuel, cafe, hotel, doctor, pharmacy, bike shop, ATM** — and add each as its own data tile on a ride profile page.
 
 Repository: [github.com/rutgerg/karoo-pitstop](https://github.com/rutgerg/karoo-pitstop)
 
@@ -9,7 +9,7 @@ Repository: [github.com/rutgerg/karoo-pitstop](https://github.com/rutgerg/karoo-
 [![License](https://img.shields.io/github/license/rutgerg/karoo-pitstop)](LICENSE)
 
 <p align="center">
-  <img src="docs/screenshot-karoo-tiles.png" alt="Three nearby-POI data tiles on a Karoo 3 ride profile page" width="280" />
+  <img src="docs/screenshot-karoo-tiles.png" alt="Three nearby-POI data tiles on a Karoo ride profile page" width="280" />
 </p>
 
 ## Why Pitstop
@@ -31,7 +31,7 @@ Pitstop is built for situations where the route is set but the next stop is unde
 
 ## Status
 
-- **`:app`** — Android module. Nine per-category data field tiles (Restaurant, Supermarket, Fuel, Cafe, Hotel, Doctor, Pharmacy, Bike Shop, ATM) registered as `KarooExtension` data types render on a ride profile page. Tap a tile to dispatch `LaunchPinDrop` and open the Karoo's pin activity. Verified end-to-end on a Karoo 3.
+- **`:app`** — Android module. Nine per-category data field tiles (Restaurant, Supermarket, Fuel, Cafe, Hotel, Doctor, Pharmacy, Bike Shop, ATM) registered as `KarooExtension` data types render on a ride profile page. Tap a tile to dispatch `LaunchPinDrop` and open the Karoo's pin activity. Verified end-to-end on a Karoo.
 - **`:data`** — Headless Kotlin/JVM module: Overpass POI fetcher, opening-hours evaluator, polyline decoder, SQLite cache. Runnable on a Mac via `./gradlew :data:run`. JUnit tests cover slicer, opening-hours, polyline. App-level tests cover `KarooClient.navigateTo`, `RouteWatcher` (including Wi-Fi-triggered retry), `PeriodicRefresh`, the tile view-decision logic, and the `FetchDiary` ring buffer.
 
 ## How it works
@@ -45,7 +45,7 @@ Pitstop is built for situations where the route is set but the next stop is unde
 ## Install
 
 1. Download `pitstop.apk` from the [latest release](https://github.com/rutgerg/karoo-pitstop/releases/latest).
-2. Enable USB debugging on the Karoo 3: Settings → System → About → tap build number 7× → enable USB debugging in Developer options.
+2. Enable USB debugging on the Karoo: Settings → System → About → tap build number 7× → enable USB debugging in Developer options.
 3. Sideload over USB:
 
    ```bash
