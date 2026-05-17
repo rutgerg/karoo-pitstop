@@ -26,7 +26,7 @@ $selectors
 
     private fun selectorFor(category: PoiCategory, radiusMeters: Int, coords: String): String =
         when (category) {
-            PoiCategory.RESTAURANT -> "nwr[\"amenity\"=\"restaurant\"](around:$radiusMeters,$coords);"
+            PoiCategory.RESTAURANT -> "nwr[\"amenity\"~\"^(restaurant|fast_food)\$\"](around:$radiusMeters,$coords);"
             PoiCategory.FUEL -> "nwr[\"amenity\"=\"fuel\"](around:$radiusMeters,$coords);"
             PoiCategory.SUPERMARKET -> "nwr[\"shop\"~\"^(supermarket|convenience)\$\"](around:$radiusMeters,$coords);"
             PoiCategory.CAFE -> "nwr[\"amenity\"~\"^(bar|cafe)\$\"](around:$radiusMeters,$coords);"
