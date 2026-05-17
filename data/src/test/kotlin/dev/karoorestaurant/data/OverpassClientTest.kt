@@ -4,6 +4,9 @@ import dev.karoorestaurant.data.overpass.OverpassClient
 import dev.karoorestaurant.data.poi.PoiCategory
 import dev.karoorestaurant.data.route.LatLng
 import kotlinx.coroutines.test.runTest
+import okhttp3.Dns
+import okhttp3.OkHttpClient
+import okhttp3.dnsoverhttps.DnsOverHttps
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.jupiter.api.AfterEach
@@ -11,6 +14,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNotSame
 import kotlin.test.assertTrue
 
 class OverpassClientTest {
@@ -30,8 +34,18 @@ class OverpassClientTest {
 
     private fun client() = OverpassClient(
         endpoint = server.url("/api").toString(),
+        // MockWebServer binds to localhost which Cloudflare DoH cannot resolve; tests need
+        // an OkHttpClient that uses the system resolver so localhost works.
+        http = OkHttpClient.Builder().build(),
         baseBackoffMs = 1L,
     )
+
+    @Test
+    fun `defaultHttp uses DnsOverHttps so system DNS failures do not break the fetch`() {
+        val http = OverpassClient.defaultHttp()
+        assertNotSame(Dns.SYSTEM, http.dns, "default Overpass HTTP must override system DNS")
+        assertTrue(http.dns is DnsOverHttps, "default Overpass HTTP must use DnsOverHttps")
+    }
 
     private fun overpassJson(elements: String): String =
         """{"elements":[$elements]}"""
