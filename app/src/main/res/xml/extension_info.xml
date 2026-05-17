@@ -60,4 +60,10 @@
         description="@string/data_type_nearby_description"
         graphical="true"
         icon="@drawable/ic_atm" />
+    <DataType
+        typeId="nearby_train_station"
+        displayName="@string/category_train_station"
+        description="@string/data_type_nearby_description"
+        graphical="true"
+        icon="@drawable/ic_train_station" />
 </ExtensionInfo>

@@ -51,6 +51,20 @@ class PoiCategoryTagsTest {
     }
 
     @Test
+    fun `train station maps from railway station or halt`() {
+        assertEquals(PoiCategory.TRAIN_STATION, PoiCategory.fromTags(mapOf("railway" to "station")))
+        assertEquals(PoiCategory.TRAIN_STATION, PoiCategory.fromTags(mapOf("railway" to "halt")))
+    }
+
+    @Test
+    fun `train station does not match other railway tags`() {
+        // tram_stop, subway_entrance and similar are intentionally out of scope.
+        assertNull(PoiCategory.fromTags(mapOf("railway" to "tram_stop")))
+        assertNull(PoiCategory.fromTags(mapOf("railway" to "subway_entrance")))
+        assertNull(PoiCategory.fromTags(mapOf("railway" to "level_crossing")))
+    }
+
+    @Test
     fun `unrelated tags resolve to null`() {
         assertNull(PoiCategory.fromTags(mapOf("amenity" to "library")))
         assertNull(PoiCategory.fromTags(mapOf("shop" to "clothes")))

@@ -22,6 +22,7 @@ class RestaurantExtensionService : KarooExtension(EXTENSION_ID, BuildConfig.VERS
             NearbyPoiDataType(app.karoo, dev.karoorestaurant.data.poi.PoiCategory.PHARMACY, NearbyPoiDataType.TYPE_PHARMACY, state),
             NearbyPoiDataType(app.karoo, dev.karoorestaurant.data.poi.PoiCategory.BIKE_SHOP, NearbyPoiDataType.TYPE_BIKE_SHOP, state),
             NearbyPoiDataType(app.karoo, dev.karoorestaurant.data.poi.PoiCategory.ATM, NearbyPoiDataType.TYPE_ATM, state),
+            NearbyPoiDataType(app.karoo, dev.karoorestaurant.data.poi.PoiCategory.TRAIN_STATION, NearbyPoiDataType.TYPE_TRAIN_STATION, state),
         )
     }
 
