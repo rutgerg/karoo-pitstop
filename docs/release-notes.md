@@ -2,6 +2,10 @@
 
 User-facing notes per `vX.Y.Z` release. The release workflow extracts the section matching the current tag and pipes it into the Karoo App Manifest as `releaseNotes`, where it appears in the Karoo extension About panel. Add a new `## X.Y.Z` section at the top before tagging.
 
+## 1.4.1
+
+- The Karoo Extensions About panel description now mentions the Train Station tile shipped in 1.4.0. No functional changes.
+
 ## 1.4.0
 
 - New **Train Station** tile — add it to a data page to see the nearest station along the route. Small unstaffed halts (common in NL/BE/DE) are included.
