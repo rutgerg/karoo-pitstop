@@ -7,9 +7,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
+import okhttp3.Dns
 import okhttp3.FormBody
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.dnsoverhttps.DnsOverHttps
+import java.net.InetAddress
 import java.util.concurrent.TimeUnit
 
 /**
@@ -92,9 +96,28 @@ class OverpassClient(
         const val DEFAULT_BASE_BACKOFF_MS = 1_000L
         const val MAX_BACKOFF_MS = 16_000L
 
-        private fun defaultHttp(): OkHttpClient = OkHttpClient.Builder()
+        internal fun defaultHttp(): OkHttpClient = OkHttpClient.Builder()
             .connectTimeout(15, TimeUnit.SECONDS)
             .readTimeout(120, TimeUnit.SECONDS)
+            .dns(dnsOverHttps())
+            .build()
+
+        /**
+         * DNS-over-HTTPS resolver pointed at Cloudflare. The Karoo's system DNS has been
+         * observed to fail intermittently on home Wi-Fi networks (UnknownHostException for
+         * overpass-api.de even though TCP to the resolved IP works once a different network
+         * state intervenes). Bootstrapping with `1.1.1.1` as an IP literal means this
+         * resolver never falls back to system DNS — every lookup goes through HTTPS to
+         * Cloudflare, which the Karoo can reach as long as it has any working IP route.
+         */
+        internal fun dnsOverHttps(): Dns = DnsOverHttps.Builder()
+            .client(OkHttpClient.Builder().build())
+            .url("https://cloudflare-dns.com/dns-query".toHttpUrl())
+            .bootstrapDnsHosts(
+                InetAddress.getByName("1.1.1.1"),
+                InetAddress.getByName("1.0.0.1"),
+            )
+            .includeIPv6(false)
             .build()
     }
 }
