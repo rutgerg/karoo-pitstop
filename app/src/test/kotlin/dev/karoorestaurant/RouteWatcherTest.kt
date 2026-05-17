@@ -3,7 +3,6 @@ package dev.karoorestaurant
 import dev.karoorestaurant.data.poi.Poi
 import dev.karoorestaurant.data.poi.PoiCategory
 import dev.karoorestaurant.telemetry.FakeSharedPreferences
-import io.hammerhead.karooext.models.OnLocationChanged
 import io.hammerhead.karooext.models.OnNavigationState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -110,7 +109,7 @@ class RouteWatcherTest {
     }
 
     @Test
-    fun `retries on next location after fetch failure`() = runTest {
+    fun `retries on cooldown elapse after fetch failure`() = runTest {
         val port = FakeKarooSystemPort()
         val store = InMemoryPoiStore()
         var fetchCount = 0
@@ -127,11 +126,10 @@ class RouteWatcherTest {
         assertTrue(watcher.state.value is RouteFetchState.Error)
         assertEquals(1, fetchCount)
 
-        // Past the cooldown, the watcher subscribes to locationFlow and waits.
+        // Cooldown elapse alone must trigger the retry — no location signal required.
         advanceTimeBy(150L)
-        port.emitLocation(OnLocationChanged(lat = 52.0, lng = 4.0, orientation = null))
 
-        assertEquals(2, fetchCount, "the location signal must trigger a retry")
+        assertEquals(2, fetchCount, "the cooldown elapse must trigger a retry")
         assertTrue(watcher.state.value is RouteFetchState.Cached)
     }
 
@@ -150,19 +148,16 @@ class RouteWatcherTest {
         port.emitNavigationState(navigatingRoute(testPolyline))
         assertEquals(1, fetchCount)
 
-        // 1st retry.
+        // 1st retry fires after the cooldown.
         advanceTimeBy(150L)
-        port.emitLocation(OnLocationChanged(52.0, 4.0, null))
         assertEquals(2, fetchCount)
 
         // 2nd retry — total 3 attempts.
         advanceTimeBy(150L)
-        port.emitLocation(OnLocationChanged(52.0, 4.0, null))
         assertEquals(3, fetchCount)
 
-        // No 4th attempt: the watcher has given up and is no longer collecting locations.
-        advanceTimeBy(150L)
-        port.emitLocation(OnLocationChanged(52.0, 4.0, null))
+        // No 4th attempt: the watcher has given up.
+        advanceTimeBy(500L)
         assertEquals(3, fetchCount, "must not retry beyond maxAttempts")
     }
 
@@ -181,15 +176,12 @@ class RouteWatcherTest {
         port.emitNavigationState(navigatingRoute(testPolyline))
         assertEquals(1, fetchCount)
 
-        // Emitting a location while the watcher is still inside delay(cooldown) is a no-op:
-        // the locationFlow consumer has not been registered yet, so the emit is dropped.
+        // Inside delay(cooldown): no retry yet.
         advanceTimeBy(50L)
-        port.emitLocation(OnLocationChanged(52.0, 4.0, null))
-        assertEquals(1, fetchCount, "early location must not trigger a retry")
+        assertEquals(1, fetchCount, "must not retry while inside the cooldown")
 
-        // Past cooldown the consumer registers; a fresh emit triggers the retry.
+        // Past the cooldown: retry fires.
         advanceTimeBy(60L)
-        port.emitLocation(OnLocationChanged(52.0, 4.0, null))
         assertEquals(2, fetchCount)
     }
 
@@ -233,10 +225,6 @@ class RouteWatcherTest {
         ).start()
 
         port.emitNavigationState(navigatingRoute(testPolyline))
-        advanceTimeBy(150L)
-        port.emitLocation(OnLocationChanged(52.0, 4.0, null))
-        advanceTimeBy(150L)
-        port.emitLocation(OnLocationChanged(52.0, 4.0, null))
         advanceUntilIdle()
 
         val entries = diary.recent()
@@ -286,10 +274,6 @@ class RouteWatcherTest {
         watcher.start()
 
         port.emitNavigationState(navigatingRoute(testPolyline))
-        advanceTimeBy(150L)
-        port.emitLocation(OnLocationChanged(52.0, 4.0, null))
-        advanceTimeBy(150L)
-        port.emitLocation(OnLocationChanged(52.0, 4.0, null))
         advanceUntilIdle()
         assertEquals(3, fetchCount)
         assertTrue(watcher.state.value is RouteFetchState.Error)
@@ -365,10 +349,6 @@ class RouteWatcherTest {
         watcher.start()
 
         port.emitNavigationState(navigatingRoute(testPolyline))
-        advanceTimeBy(150L)
-        port.emitLocation(OnLocationChanged(52.0, 4.0, null))
-        advanceTimeBy(150L)
-        port.emitLocation(OnLocationChanged(52.0, 4.0, null))
         advanceUntilIdle()
         assertEquals(3, fetchCount, "first emit exhausts maxAttempts")
         assertTrue(watcher.state.value is RouteFetchState.Error)
