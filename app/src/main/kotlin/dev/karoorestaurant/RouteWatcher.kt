@@ -13,7 +13,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
@@ -79,11 +78,10 @@ class RouteWatcher(
                 recordOutcome(route, windowCount, attempts)
                 return
             }
-            // Wait at least the cooldown, then for the next location signal — whichever
-            // is later. A new route arrival cancels this whole block via collectLatest.
+            // Wait the cooldown before the next attempt. A new route arrival or a
+            // ConnectivityWatcher onAvailable signal cancels this block via collectLatest
+            // and restarts the loop from attempt 1.
             delay(retryCooldownMs)
-            Log.i(TAG, "waiting for next location event before retrying ${route.name}")
-            karoo.locationFlow.first()
         }
     }
 
@@ -132,7 +130,7 @@ class RouteWatcher(
 
     companion object {
         const val DEFAULT_RETRY_COOLDOWN_MS: Long = 60_000L
-        const val DEFAULT_MAX_ATTEMPTS: Int = 3
+        const val DEFAULT_MAX_ATTEMPTS: Int = 5
         private const val TAG = "RouteWatcher"
     }
 }
