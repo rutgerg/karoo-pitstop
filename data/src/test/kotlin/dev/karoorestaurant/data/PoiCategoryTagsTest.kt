@@ -16,6 +16,19 @@ class PoiCategoryTagsTest {
     }
 
     @Test
+    fun `restaurant also includes fast_food so snack bars and frituren surface`() {
+        assertEquals(PoiCategory.RESTAURANT, PoiCategory.fromTags(mapOf("amenity" to "fast_food")))
+    }
+
+    @Test
+    fun `restaurant does not include pub or food_court`() {
+        // Out of scope for now — revisit if real-ride feedback says otherwise.
+        assertNull(PoiCategory.fromTags(mapOf("amenity" to "pub")))
+        assertNull(PoiCategory.fromTags(mapOf("amenity" to "food_court")))
+        assertNull(PoiCategory.fromTags(mapOf("amenity" to "biergarten")))
+    }
+
+    @Test
     fun `cafe maps from amenity bar or amenity cafe`() {
         assertEquals(PoiCategory.CAFE, PoiCategory.fromTags(mapOf("amenity" to "cafe")))
         assertEquals(PoiCategory.CAFE, PoiCategory.fromTags(mapOf("amenity" to "bar")))
