@@ -51,16 +51,11 @@ class NearbyPoiDataType(
                 karoo.locationFlow.sample(SAMPLE_MS),
                 routeFetchState,
             ) { rider, state -> rider to state }.collect { (rider, state) ->
-                val view = tileViewFor(state)
-                val pick = if (view.showPick) {
-                    withContext(Dispatchers.IO) {
-                        computeNearbyPicks(karoo, rider.point).firstOrNull { it.poi.category == category }
-                    }
-                } else {
-                    null
+                val pick = withContext(Dispatchers.IO) {
+                    computeNearbyPicks(karoo, rider.point).firstOrNull { it.poi.category == category }
                 }
                 emitter.updateView(
-                    buildView(context, pick = pick, rider = rider, placeholderRes = view.placeholderRes),
+                    buildView(context, pick = pick, rider = rider, placeholderRes = placeholderFor(state)),
                 )
             }
         }
@@ -164,13 +159,5 @@ class NearbyPoiDataType(
     }
 }
 
-internal sealed class TileView(
-    val placeholderRes: Int,
-    val showPick: Boolean,
-) {
-    data object WaitingForWifi : TileView(R.string.field_waiting_for_wifi, showPick = false)
-    data object Active : TileView(R.string.field_none, showPick = true)
-}
-
-internal fun tileViewFor(state: RouteFetchState): TileView =
-    if (state is RouteFetchState.Error) TileView.WaitingForWifi else TileView.Active
+internal fun placeholderFor(state: RouteFetchState): Int =
+    if (state is RouteFetchState.Error) R.string.field_waiting_for_wifi else R.string.field_none
