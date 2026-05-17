@@ -2,6 +2,14 @@
 
 User-facing notes per `vX.Y.Z` release. The release workflow extracts the section matching the current tag and pipes it into the Karoo App Manifest as `releaseNotes`, where it appears in the Karoo extension About panel. Add a new `## X.Y.Z` section at the top before tagging.
 
+## 1.4.2
+
+- New **Train Station** tile — add it to a data page to see the nearest station along the route. Small unstaffed halts (common in NL/BE/DE) are included.
+- The **Restaurant** tile now also surfaces fast food, kebab and shawarma shops, frituren, and snack bars — the food you actually pass on a touring ride.
+- Cached POIs keep showing on the tile even when a background refresh fails, so a brief Wi-Fi blip no longer wipes a working tile.
+- Faster recovery from spotty Wi-Fi: more retry attempts and a tighter cadence, so the cache fills sooner once a connection is back.
+- POI lookups now use Cloudflare DNS-over-HTTPS to bypass the Karoo's system resolver, which has been observed failing on some home Wi-Fi networks even when the network is otherwise working.
+
 ## 1.4.1
 
 - The Karoo Extensions About panel description now mentions the Train Station tile shipped in 1.4.0. No functional changes.
