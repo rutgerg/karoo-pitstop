@@ -51,16 +51,11 @@ class NearbyPoiDataType(
                 karoo.locationFlow.sample(SAMPLE_MS),
                 routeFetchState,
             ) { rider, state -> rider to state }.collect { (rider, state) ->
-                val view = tileViewFor(state)
-                val pick = if (view.showPick) {
-                    withContext(Dispatchers.IO) {
-                        computeNearbyPicks(karoo, rider.point).firstOrNull { it.poi.category == category }
-                    }
-                } else {
-                    null
+                val pick = withContext(Dispatchers.IO) {
+                    tilePick(computeNearbyPicks(karoo, rider.point), category)
                 }
                 emitter.updateView(
-                    buildView(context, pick = pick, rider = rider, placeholderRes = view.placeholderRes),
+                    buildView(context, pick = pick, rider = rider, placeholderRes = placeholderFor(state)),
                 )
             }
         }
@@ -164,13 +159,22 @@ class NearbyPoiDataType(
     }
 }
 
-internal sealed class TileView(
-    val placeholderRes: Int,
-    val showPick: Boolean,
-) {
-    data object WaitingForWifi : TileView(R.string.field_waiting_for_wifi, showPick = false)
-    data object Active : TileView(R.string.field_none, showPick = true)
-}
+internal fun placeholderFor(state: RouteFetchState): Int =
+    if (state is RouteFetchState.Error) R.string.field_waiting_for_wifi else R.string.field_none
 
-internal fun tileViewFor(state: RouteFetchState): TileView =
-    if (state is RouteFetchState.Error) TileView.WaitingForWifi else TileView.Active
+/**
+ * Tile-side filter on top of [computeNearbyPicks]. Picks the first match by category, and drops it
+ * if it is farther than [maxDistanceMeters]. The distance gate is what keeps a stale cache from a
+ * different region (e.g. a prior ride in another city) from being served as if it were relevant to
+ * the current ride — see issue #149. Threshold sits above the corridor-fetch radius (10 km) with a
+ * margin for short off-route deviations.
+ */
+internal fun tilePick(
+    picks: List<PoiNearby>,
+    category: PoiCategory,
+    maxDistanceMeters: Double = MAX_PICK_DISTANCE_METERS,
+): PoiNearby? =
+    picks.firstOrNull { it.poi.category == category }
+        ?.takeIf { it.distanceMeters <= maxDistanceMeters }
+
+internal const val MAX_PICK_DISTANCE_METERS: Double = 15_000.0
