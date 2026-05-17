@@ -35,5 +35,6 @@ $selectors
             PoiCategory.PHARMACY -> "nwr[\"amenity\"=\"pharmacy\"](around:$radiusMeters,$coords);"
             PoiCategory.BIKE_SHOP -> "nwr[\"shop\"=\"bicycle\"](around:$radiusMeters,$coords);"
             PoiCategory.ATM -> "nwr[\"amenity\"=\"atm\"](around:$radiusMeters,$coords);"
+            PoiCategory.TRAIN_STATION -> "nwr[\"railway\"~\"^(station|halt)\$\"](around:$radiusMeters,$coords);"
         }
 }
