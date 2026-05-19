@@ -8,7 +8,7 @@ karoo_restaurant/
 │       ├── KarooClient.kt                            wraps the system port, exposes locationFlow + routeFlow + navigateTo
 │       ├── KarooSystemPort.kt                        port over KarooSystemService; production + fake share the interface
 │       ├── RouteWatcher.kt                           collects routeFlow, prefetches corridor, exposes RouteFetchState
-│       ├── RestaurantExtensionService.kt             KarooExtension service; registers the nine DataTypeImpl tiles
+│       ├── RestaurantExtensionService.kt             KarooExtension service; registers the thirteen DataTypeImpl tiles
 │       ├── NearbyPoiDataType.kt                      per-category data tile rendering distance + name + opening hours
 │       ├── NearbyPicks.kt                            shared compute for tile + Activity picker
 │       ├── LaunchPoiReceiver.kt                      tile-tap broadcast → KarooClient.navigateTo
@@ -21,7 +21,7 @@ karoo_restaurant/
 │       ├── db/{PoiStore,AndroidPoiStore}.kt          interface + SQLiteOpenHelper impl
 │       └── ui/Theme.kt
 │   └── src/main/res/
-│       ├── drawable/{ic_restaurant,ic_supermarket,ic_fuel,ic_cafe,ic_hotel,ic_doctor,ic_pharmacy,ic_bike_shop,ic_atm,ic_pitstop}.xml
+│       ├── drawable/{ic_restaurant,ic_supermarket,ic_fuel,ic_cafe,ic_hotel,ic_doctor,ic_pharmacy,ic_bike_shop,ic_atm,ic_train_station,ic_drinking_water,ic_toilets,ic_cemetery,ic_pitstop}.xml
 │       ├── layout/data_field_nearby_poi.xml         RemoteViews layout for the data tile
 │       └── xml/extension_info.xml                    extension metadata read by the Karoo system
 ├── data/                                             — Kotlin/JVM module

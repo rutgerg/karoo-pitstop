@@ -103,6 +103,9 @@ class KarooClient(
         PoiCategory.BIKE_SHOP -> Symbol.POI.Types.BIKE_SHOP
         PoiCategory.ATM -> Symbol.POI.Types.ATM
         PoiCategory.TRAIN_STATION -> Symbol.POI.Types.TRANSIT_CENTER
+        PoiCategory.DRINKING_WATER -> Symbol.POI.Types.WATER
+        PoiCategory.TOILETS -> Symbol.POI.Types.RESTROOM
+        PoiCategory.CEMETERY -> Symbol.POI.Types.MONUMENT
     }
 
     private fun OnNavigationState.NavigationState.toRoute(): Route? = when (this) {
@@ -129,4 +132,3 @@ class KarooClient(
         const val TAG = "KarooClient"
     }
 }
-

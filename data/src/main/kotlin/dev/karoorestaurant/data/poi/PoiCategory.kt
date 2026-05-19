@@ -10,7 +10,10 @@ enum class PoiCategory(val label: String) {
     PHARMACY("Pharmacy"),
     BIKE_SHOP("Bike Shop"),
     ATM("ATM"),
-    TRAIN_STATION("Train Station");
+    TRAIN_STATION("Train Station"),
+    DRINKING_WATER("Drinking Water"),
+    TOILETS("Toilets"),
+    CEMETERY("Cemetery");
 
     companion object {
         fun fromFlag(value: String): PoiCategory? = when (value.trim().lowercase()) {
@@ -24,6 +27,9 @@ enum class PoiCategory(val label: String) {
             "bike", "bike_shop", "bicycle" -> BIKE_SHOP
             "atm" -> ATM
             "train", "station", "train_station", "halt" -> TRAIN_STATION
+            "water", "drinking_water", "tap", "water_tap", "well", "water_well" -> DRINKING_WATER
+            "toilet", "toilets", "wc" -> TOILETS
+            "cemetery", "graveyard", "grave_yard" -> CEMETERY
             else -> null
         }
 
@@ -32,6 +38,9 @@ enum class PoiCategory(val label: String) {
             val shop = tags["shop"]
             val tourism = tags["tourism"]
             val railway = tags["railway"]
+            val manMade = tags["man_made"]
+            val landuse = tags["landuse"]
+            val drinkingWater = tags["drinking_water"]
             return when {
                 amenity in RESTAURANT_AMENITIES -> RESTAURANT
                 amenity == "fuel" -> FUEL
@@ -43,6 +52,10 @@ enum class PoiCategory(val label: String) {
                 shop == "bicycle" -> BIKE_SHOP
                 amenity == "atm" -> ATM
                 railway in TRAIN_STATION_RAILWAY -> TRAIN_STATION
+                amenity == "drinking_water" && drinkingWater != "no" -> DRINKING_WATER
+                manMade in DRINKING_WATER_MAN_MADE && drinkingWater != "no" -> DRINKING_WATER
+                amenity == "toilets" -> TOILETS
+                landuse == "cemetery" || amenity == "grave_yard" -> CEMETERY
                 else -> null
             }
         }
@@ -53,5 +66,6 @@ enum class PoiCategory(val label: String) {
         private val HOTEL_TOURISM = setOf("hotel", "guest_house", "hostel", "motel")
         private val DOCTOR_AMENITIES = setOf("doctors", "clinic")
         private val TRAIN_STATION_RAILWAY = setOf("station", "halt")
+        private val DRINKING_WATER_MAN_MADE = setOf("water_tap", "water_well")
     }
 }

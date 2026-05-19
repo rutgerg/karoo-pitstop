@@ -8,6 +8,18 @@ import kotlin.test.assertNull
 class PoiCategoryTagsTest {
 
     @Test
+    fun `fromFlag maps debug aliases for utility categories`() {
+        assertEquals(PoiCategory.DRINKING_WATER, PoiCategory.fromFlag("water"))
+        assertEquals(PoiCategory.DRINKING_WATER, PoiCategory.fromFlag("drinking_water"))
+        assertEquals(PoiCategory.DRINKING_WATER, PoiCategory.fromFlag("water_tap"))
+        assertEquals(PoiCategory.DRINKING_WATER, PoiCategory.fromFlag("well"))
+        assertEquals(PoiCategory.TOILETS, PoiCategory.fromFlag("toilet"))
+        assertEquals(PoiCategory.TOILETS, PoiCategory.fromFlag("toilets"))
+        assertEquals(PoiCategory.CEMETERY, PoiCategory.fromFlag("cemetery"))
+        assertEquals(PoiCategory.CEMETERY, PoiCategory.fromFlag("grave_yard"))
+    }
+
+    @Test
     fun `restaurant fuel and supermarket original mappings still resolve`() {
         assertEquals(PoiCategory.RESTAURANT, PoiCategory.fromTags(mapOf("amenity" to "restaurant")))
         assertEquals(PoiCategory.FUEL, PoiCategory.fromTags(mapOf("amenity" to "fuel")))
@@ -75,6 +87,37 @@ class PoiCategoryTagsTest {
         assertNull(PoiCategory.fromTags(mapOf("railway" to "tram_stop")))
         assertNull(PoiCategory.fromTags(mapOf("railway" to "subway_entrance")))
         assertNull(PoiCategory.fromTags(mapOf("railway" to "level_crossing")))
+    }
+
+    @Test
+    fun `drinking water maps from amenity drinking_water and common tap or well tags`() {
+        assertEquals(PoiCategory.DRINKING_WATER, PoiCategory.fromTags(mapOf("amenity" to "drinking_water")))
+        assertEquals(PoiCategory.DRINKING_WATER, PoiCategory.fromTags(mapOf("man_made" to "water_tap")))
+        assertEquals(PoiCategory.DRINKING_WATER, PoiCategory.fromTags(mapOf("man_made" to "water_well")))
+    }
+
+    @Test
+    fun `drinking water excludes explicit non-drinking water sources`() {
+        assertNull(PoiCategory.fromTags(mapOf("amenity" to "drinking_water", "drinking_water" to "no")))
+        assertNull(PoiCategory.fromTags(mapOf("man_made" to "water_tap", "drinking_water" to "no")))
+        assertNull(PoiCategory.fromTags(mapOf("man_made" to "water_tower")))
+    }
+
+    @Test
+    fun `toilets map from amenity toilets`() {
+        assertEquals(PoiCategory.TOILETS, PoiCategory.fromTags(mapOf("amenity" to "toilets")))
+    }
+
+    @Test
+    fun `cemetery maps from landuse cemetery or amenity grave_yard`() {
+        assertEquals(PoiCategory.CEMETERY, PoiCategory.fromTags(mapOf("landuse" to "cemetery")))
+        assertEquals(PoiCategory.CEMETERY, PoiCategory.fromTags(mapOf("amenity" to "grave_yard")))
+    }
+
+    @Test
+    fun `cemetery does not match unrelated landuse or amenity tags`() {
+        assertNull(PoiCategory.fromTags(mapOf("landuse" to "churchyard")))
+        assertNull(PoiCategory.fromTags(mapOf("amenity" to "place_of_worship")))
     }
 
     @Test

@@ -1,6 +1,6 @@
 # Pitstop
 
-An extension for the Hammerhead Karoo that surfaces the **nearest open service** along a planned route, and routes you there in two taps via the Karoo's built-in navigation. Pick any combination of ten categories — **restaurant, supermarket, fuel, cafe, hotel, doctor, pharmacy, bike shop, ATM, train station** — and add each as its own data tile on a ride profile page.
+An extension for the Hammerhead Karoo that surfaces the **nearest open service** along a planned route, and routes you there in two taps via the Karoo's built-in navigation. Pick any combination of thirteen categories — **restaurant, supermarket, fuel, cafe, hotel, doctor, pharmacy, bike shop, ATM, train station, drinking water, toilets, cemetery** — and add each as its own data tile on a ride profile page.
 
 Repository: [github.com/rutgerg/karoo-pitstop](https://github.com/rutgerg/karoo-pitstop)
 
@@ -31,7 +31,7 @@ Pitstop is built for situations where the route is set but the next stop is unde
 
 ## Status
 
-- **`:app`** — Android module. Ten per-category data field tiles (Restaurant, Supermarket, Fuel, Cafe, Hotel, Doctor, Pharmacy, Bike Shop, ATM, Train Station) registered as `KarooExtension` data types render on a ride profile page. Tap a tile to dispatch `LaunchPinDrop` and open the Karoo's pin activity. Verified end-to-end on a Karoo.
+- **`:app`** — Android module. Thirteen per-category data field tiles (Restaurant, Supermarket, Fuel, Cafe, Hotel, Doctor, Pharmacy, Bike Shop, ATM, Train Station, Drinking Water, Toilets, Cemetery) registered as `KarooExtension` data types render on a ride profile page. Tap a tile to dispatch `LaunchPinDrop` and open the Karoo's pin activity. Verified end-to-end on a Karoo.
 - **`:data`** — Headless Kotlin/JVM module: Overpass POI fetcher, opening-hours evaluator, polyline decoder, SQLite cache. Runnable on a Mac via `./gradlew :data:run`. JUnit tests cover slicer, opening-hours, polyline. App-level tests cover `KarooClient.navigateTo`, `RouteWatcher` (including Wi-Fi-triggered retry), `PeriodicRefresh`, the tile view-decision logic, and the `FetchDiary` ring buffer.
 
 ## How it works
@@ -39,7 +39,7 @@ Pitstop is built for situations where the route is set but the next stop is unde
 1. You plan a route on the Karoo's native navigator.
 2. `RouteWatcher` (Application-scoped) sees the route appear, samples the polyline every 2 km, queries Overpass with a 10 km buffer, and upserts ~thousands of POIs into local SQLite. Dedups on a `route_fetches` table so the same route isn't re-fetched. If Wi-Fi isn't available at route load, the fetch retries automatically as soon as the Karoo associates with an internet-capable network — no need to re-pick the route.
 3. `PeriodicRefresh` wakes every 20 minutes and re-queries a 10 km radius around the rider's latest known location, keeping the cache warm on off-route detours and multi-day rides. Fails silently when offline; succeeds whenever Wi-Fi is reachable.
-4. Ten data field tiles (Restaurant, Supermarket, Fuel, Cafe, Hotel, Doctor, Pharmacy, Bike Shop, ATM, Train Station) on your ride profile page render the nearest non-closed POI per category, with distance, name, and the OSM `opening_hours` line. Closed entries are filtered out; Open and Unknown are both shown. While a fetch is pending recovery the tile shows **Waiting for Wi-Fi…**.
+4. Thirteen data field tiles (Restaurant, Supermarket, Fuel, Cafe, Hotel, Doctor, Pharmacy, Bike Shop, ATM, Train Station, Drinking Water, Toilets, Cemetery) on your ride profile page render the nearest non-closed POI per category, with distance, name, and the OSM `opening_hours` line. Closed entries are filtered out; Open and Unknown are both shown. While a fetch is pending recovery the tile shows **Waiting for Wi-Fi…**.
 5. Tap a tile → `LaunchPinDrop(Symbol.POI(...))` opens the Karoo's pin Activity → tap **Navigate** (replaces the active route) or **Save as POI** (bookmarks for later — no route change).
 
 ## Install
@@ -54,7 +54,7 @@ Pitstop is built for situations where the route is set but the next stop is unde
 
    If the install fails with `INSTALL_FAILED_UPDATE_INCOMPATIBLE`, you have a pre-v1.2.0 build installed with the old signing key. Uninstall it once (`adb uninstall dev.karoorestaurant`) and re-run the install. Subsequent updates will work in place.
 
-4. Reboot the Karoo. The App Store binds the extension as **Pitstop** and the ten data types appear in the Karoo Pages data-type picker. Add any combination of **Restaurant**, **Supermarket**, **Fuel**, **Cafe**, **Hotel**, **Doctor**, **Pharmacy**, **Bike Shop**, **ATM**, and **Train Station** tiles to a ride profile page; that page is the on-device entry point. There is no app-drawer icon — see [Karoo platform notes](docs/karoo-platform-notes.md) for why.
+4. Reboot the Karoo. The App Store binds the extension as **Pitstop** and the thirteen data types appear in the Karoo Pages data-type picker. Add any combination of **Restaurant**, **Supermarket**, **Fuel**, **Cafe**, **Hotel**, **Doctor**, **Pharmacy**, **Bike Shop**, **ATM**, **Train Station**, **Drinking Water**, **Toilets**, and **Cemetery** tiles to a ride profile page; that page is the on-device entry point. There is no app-drawer icon — see [Karoo platform notes](docs/karoo-platform-notes.md) for why.
 
 ## Build from source
 

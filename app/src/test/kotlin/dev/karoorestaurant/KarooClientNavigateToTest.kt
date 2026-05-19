@@ -3,6 +3,7 @@ package dev.karoorestaurant
 import dev.karoorestaurant.data.poi.Poi
 import dev.karoorestaurant.data.poi.PoiCategory
 import io.hammerhead.karooext.models.LaunchPinDrop
+import io.hammerhead.karooext.models.Symbol
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -80,5 +81,32 @@ class KarooClientNavigateToTest {
         assertEquals(PoiCategory.values().size, pins.size)
         // Each pin should have a non-blank type string mapped from its category.
         pins.forEach { assertTrue(it.type.isNotBlank()) }
+    }
+
+    @Test
+    fun `new utility categories map to specific Symbol types`() {
+        assertEquals(Symbol.POI.Types.WATER, pinTypeFor(PoiCategory.DRINKING_WATER))
+        assertEquals(Symbol.POI.Types.RESTROOM, pinTypeFor(PoiCategory.TOILETS))
+        assertEquals(Symbol.POI.Types.MONUMENT, pinTypeFor(PoiCategory.CEMETERY))
+    }
+
+    private fun pinTypeFor(category: PoiCategory): String {
+        val port = FakeKarooSystemPort()
+        val store = InMemoryPoiStore()
+        val client = KarooClient(port, store, overpass = { _, _, _ -> emptyList() })
+
+        client.navigateTo(
+            Poi(
+                osmType = "node",
+                osmId = category.ordinal.toLong(),
+                name = category.name,
+                category = category,
+                lat = 0.0,
+                lon = 0.0,
+                openingHoursTag = null,
+            ),
+        )
+
+        return (port.dispatched.single() as LaunchPinDrop).pin.type
     }
 }

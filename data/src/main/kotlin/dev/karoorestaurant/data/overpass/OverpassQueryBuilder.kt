@@ -14,7 +14,8 @@ object OverpassQueryBuilder {
         }
         val selectors = PoiCategory.values()
             .filter { categories == null || it in categories }
-            .joinToString("\n") { "              " + selectorFor(it, radiusMeters, coords) }
+            .flatMap { selectorsFor(it, radiusMeters, coords) }
+            .joinToString("\n") { "              " + it }
         return """
             [out:json][timeout:60];
             (
@@ -24,17 +25,26 @@ $selectors
         """.trimIndent()
     }
 
-    private fun selectorFor(category: PoiCategory, radiusMeters: Int, coords: String): String =
+    private fun selectorsFor(category: PoiCategory, radiusMeters: Int, coords: String): List<String> =
         when (category) {
-            PoiCategory.RESTAURANT -> "nwr[\"amenity\"~\"^(restaurant|fast_food)\$\"](around:$radiusMeters,$coords);"
-            PoiCategory.FUEL -> "nwr[\"amenity\"=\"fuel\"](around:$radiusMeters,$coords);"
-            PoiCategory.SUPERMARKET -> "nwr[\"shop\"~\"^(supermarket|convenience)\$\"](around:$radiusMeters,$coords);"
-            PoiCategory.CAFE -> "nwr[\"amenity\"~\"^(bar|cafe)\$\"](around:$radiusMeters,$coords);"
-            PoiCategory.HOTEL -> "nwr[\"tourism\"~\"^(hotel|guest_house|hostel|motel)\$\"](around:$radiusMeters,$coords);"
-            PoiCategory.DOCTOR -> "nwr[\"amenity\"~\"^(doctors|clinic)\$\"](around:$radiusMeters,$coords);"
-            PoiCategory.PHARMACY -> "nwr[\"amenity\"=\"pharmacy\"](around:$radiusMeters,$coords);"
-            PoiCategory.BIKE_SHOP -> "nwr[\"shop\"=\"bicycle\"](around:$radiusMeters,$coords);"
-            PoiCategory.ATM -> "nwr[\"amenity\"=\"atm\"](around:$radiusMeters,$coords);"
-            PoiCategory.TRAIN_STATION -> "nwr[\"railway\"~\"^(station|halt)\$\"](around:$radiusMeters,$coords);"
+            PoiCategory.RESTAURANT -> listOf("nwr[\"amenity\"~\"^(restaurant|fast_food)\$\"](around:$radiusMeters,$coords);")
+            PoiCategory.FUEL -> listOf("nwr[\"amenity\"=\"fuel\"](around:$radiusMeters,$coords);")
+            PoiCategory.SUPERMARKET -> listOf("nwr[\"shop\"~\"^(supermarket|convenience)\$\"](around:$radiusMeters,$coords);")
+            PoiCategory.CAFE -> listOf("nwr[\"amenity\"~\"^(bar|cafe)\$\"](around:$radiusMeters,$coords);")
+            PoiCategory.HOTEL -> listOf("nwr[\"tourism\"~\"^(hotel|guest_house|hostel|motel)\$\"](around:$radiusMeters,$coords);")
+            PoiCategory.DOCTOR -> listOf("nwr[\"amenity\"~\"^(doctors|clinic)\$\"](around:$radiusMeters,$coords);")
+            PoiCategory.PHARMACY -> listOf("nwr[\"amenity\"=\"pharmacy\"](around:$radiusMeters,$coords);")
+            PoiCategory.BIKE_SHOP -> listOf("nwr[\"shop\"=\"bicycle\"](around:$radiusMeters,$coords);")
+            PoiCategory.ATM -> listOf("nwr[\"amenity\"=\"atm\"](around:$radiusMeters,$coords);")
+            PoiCategory.TRAIN_STATION -> listOf("nwr[\"railway\"~\"^(station|halt)\$\"](around:$radiusMeters,$coords);")
+            PoiCategory.DRINKING_WATER -> listOf(
+                "nwr[\"amenity\"=\"drinking_water\"][\"access\"!~\"^(private|no)\$\"](around:$radiusMeters,$coords);",
+                "nwr[\"man_made\"~\"^(water_tap|water_well)\$\"][\"drinking_water\"!=\"no\"][\"access\"!~\"^(private|no)\$\"](around:$radiusMeters,$coords);",
+            )
+            PoiCategory.TOILETS -> listOf("nwr[\"amenity\"=\"toilets\"][\"access\"!~\"^(private|no)\$\"](around:$radiusMeters,$coords);")
+            PoiCategory.CEMETERY -> listOf(
+                "nwr[\"landuse\"=\"cemetery\"][\"access\"!~\"^(private|no)\$\"](around:$radiusMeters,$coords);",
+                "nwr[\"amenity\"=\"grave_yard\"][\"access\"!~\"^(private|no)\$\"](around:$radiusMeters,$coords);",
+            )
         }
 }

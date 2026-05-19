@@ -66,4 +66,22 @@
         description="@string/data_type_nearby_description"
         graphical="true"
         icon="@drawable/ic_train_station" />
+    <DataType
+        typeId="nearby_drinking_water"
+        displayName="@string/category_drinking_water"
+        description="@string/data_type_nearby_description"
+        graphical="true"
+        icon="@drawable/ic_drinking_water" />
+    <DataType
+        typeId="nearby_toilets"
+        displayName="@string/category_toilets"
+        description="@string/data_type_nearby_description"
+        graphical="true"
+        icon="@drawable/ic_toilets" />
+    <DataType
+        typeId="nearby_cemetery"
+        displayName="@string/category_cemetery"
+        description="@string/data_type_nearby_description"
+        graphical="true"
+        icon="@drawable/ic_cemetery" />
 </ExtensionInfo>

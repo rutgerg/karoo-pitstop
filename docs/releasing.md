@@ -13,7 +13,7 @@ The workflow requires a `KAROO_EXT_PAT` repository secret — a PAT with `read:p
 
 Before tagging a new `vX.Y.Z`:
 
-- [ ] **Hardware test (only for non-mechanical releases)** — sideload the latest debug build to a Karoo 3, plan a route, confirm the 9 tiles render with live data and that tapping a tile opens the pin activity. Mechanical releases (version-only bumps) can skip this.
+- [ ] **Hardware test (only for non-mechanical releases)** — sideload the latest debug build to a Karoo 3, plan a route, confirm the thirteen tiles render with live data and that tapping a tile opens the pin activity. Mechanical releases (version-only bumps) can skip this.
 - [ ] **Screenshot** — refresh `docs/screenshot-karoo-tiles.png` if the tile layout, font, or content changed.
 - [ ] **Status line** — if you re-tested on hardware, append a "last confirmed YYYY-MM-DD" date to the Status section's `Verified end-to-end on a Karoo 3` line.
 - [ ] **Release notes** — add a `## X.Y.Z` section at the top of `docs/release-notes.md` with user-facing bullets. The workflow extracts this section into the Karoo App Manifest `releaseNotes` field shown in the on-device About panel.

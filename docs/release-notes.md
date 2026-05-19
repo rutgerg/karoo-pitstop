@@ -2,6 +2,13 @@
 
 User-facing notes per `vX.Y.Z` release. The release workflow extracts the section matching the current tag and pipes it into the Karoo App Manifest as `releaseNotes`, where it appears in the Karoo extension About panel. Add a new `## X.Y.Z` section at the top before tagging.
 
+## 1.5.0
+
+- New Drinking Water tile for refill points along the route, including mapped drinking-water amenities, water taps, and water wells.
+- New Toilets tile for comfort stops along the route.
+- New Cemetery tile as a rural fallback for water, since cemeteries often have an outdoor tap or fountain and are well mapped in OpenStreetMap.
+- Pitstop now offers thirteen route-side category tiles: Restaurant, Supermarket, Fuel, Cafe, Hotel, Doctor, Pharmacy, Bike Shop, ATM, Train Station, Drinking Water, Toilets, and Cemetery.
+
 ## 1.4.2
 
 - New **Train Station** tile — add it to a data page to see the nearest station along the route. Small unstaffed halts (common in NL/BE/DE) are included.

@@ -156,6 +156,9 @@ class NearbyPoiDataType(
         const val TYPE_BIKE_SHOP = "nearby_bike_shop"
         const val TYPE_ATM = "nearby_atm"
         const val TYPE_TRAIN_STATION = "nearby_train_station"
+        const val TYPE_DRINKING_WATER = "nearby_drinking_water"
+        const val TYPE_TOILETS = "nearby_toilets"
+        const val TYPE_CEMETERY = "nearby_cemetery"
         private const val SAMPLE_MS = 10_000L
     }
 }
