@@ -89,13 +89,54 @@ class StalenessTest {
         assertEquals(Staleness.AGING, stalenessOf(byName.getValue("Aging").fetchedAt, now))
     }
 
-    private fun makePoi(osmId: Long, name: String): Poi = Poi(
+    @Test
+    fun `nearest returns favorites before closer non favorites`() {
+        val store = InMemoryPoiStore()
+        val favorite = makePoi(osmId = 1L, name = "Far favorite", lat = 52.05)
+        val closer = makePoi(osmId = 2L, name = "Closer regular", lat = 52.01)
+        store.upsertAll(listOf(favorite, closer), fetchedAt = now.minus(Duration.ofDays(5)))
+        store.setFavorite(favorite, true)
+
+        val hits = store.nearest(
+            center = LatLng(52.0, 4.0),
+            category = PoiCategory.RESTAURANT,
+            maxMeters = 50_000.0,
+            limit = 50,
+            now = now,
+        )
+
+        assertEquals(listOf("Far favorite", "Closer regular"), hits.map { it.poi.name })
+        assertEquals(true, hits.first().isFavorite)
+    }
+
+    @Test
+    fun `favorite survives max age filter and upsert refresh`() {
+        val store = InMemoryPoiStore()
+        val favorite = makePoi(osmId = 1L, name = "Expired favorite")
+        store.upsertAll(listOf(favorite), fetchedAt = now.minus(Duration.ofDays(5)))
+        store.setFavorite(favorite, true)
+        store.upsertAll(listOf(favorite.copy(name = "Still favorite")), fetchedAt = now.minus(Duration.ofDays(90)))
+
+        val hits = store.nearest(
+            center = LatLng(52.0, 4.0),
+            category = PoiCategory.RESTAURANT,
+            maxMeters = 50_000.0,
+            limit = 50,
+            now = now,
+        )
+
+        assertEquals(listOf("Still favorite"), hits.map { it.poi.name })
+        assertEquals(true, hits.single().isFavorite)
+        assertEquals(Staleness.EXPIRED, stalenessOf(hits.single().fetchedAt, now))
+    }
+
+    private fun makePoi(osmId: Long, name: String, lat: Double = 52.0, lon: Double = 4.0): Poi = Poi(
         osmId = osmId,
         osmType = "node",
         name = name,
         category = PoiCategory.RESTAURANT,
-        lat = 52.0,
-        lon = 4.0,
+        lat = lat,
+        lon = lon,
         openingHoursTag = null,
     )
 }

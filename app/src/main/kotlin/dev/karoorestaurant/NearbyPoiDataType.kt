@@ -118,20 +118,22 @@ class NearbyPoiDataType(
 
     private fun buildPoiLine(pick: PoiNearby, rider: RiderLocation?): CharSequence {
         val arrow = directionArrow(pick, rider)
+        val favorite = if (pick.isFavorite) "$FAVORITE_MARK " else ""
         val tail = "${formatDistance(pick.distanceMeters)}  ${pick.poi.name}"
-        if (arrow == null) return tail
-        val full = "$arrow $tail"
+        if (arrow == null) return "$favorite$tail"
+        val arrowStart = favorite.length
+        val full = "$favorite$arrow $tail"
         return SpannableString(full).apply {
             setSpan(
                 RelativeSizeSpan(ARROW_SCALE),
-                0,
-                1,
+                arrowStart,
+                arrowStart + 1,
                 Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
             )
             setSpan(
                 ForegroundColorSpan(ARROW_COLOR),
-                0,
-                1,
+                arrowStart,
+                arrowStart + 1,
                 Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
             )
         }
@@ -146,6 +148,7 @@ class NearbyPoiDataType(
     companion object {
         private val ARROW_COLOR = Color.parseColor("#3B9EFF")
         private const val ARROW_SCALE = 1.5f
+        private const val FAVORITE_MARK = "★"
         const val TYPE_RESTAURANT = "nearby_restaurant"
         const val TYPE_SUPERMARKET = "nearby_supermarket"
         const val TYPE_FUEL = "nearby_fuel"

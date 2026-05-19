@@ -19,6 +19,7 @@ internal fun computeNearbyPicks(karoo: KarooClient, center: LatLng): List<PoiNea
                 distanceMeters = hit.distanceMeters,
                 status = OpeningHours.evaluate(hit.poi.openingHoursTag, nowLdt),
                 staleness = stalenessOf(hit.fetchedAt, nowInstant),
+                isFavorite = hit.isFavorite,
             )
         }
     }

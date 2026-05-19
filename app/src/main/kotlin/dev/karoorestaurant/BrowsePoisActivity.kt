@@ -4,7 +4,8 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,6 +17,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -27,7 +30,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -38,6 +45,7 @@ import dev.karoorestaurant.data.poi.PoiCategory
 import dev.karoorestaurant.ui.RestaurantTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.LocalDateTime
 
@@ -77,6 +85,7 @@ private data class BrowseRow(
     val poi: Poi,
     val distanceMeters: Double,
     val status: OpeningHours.Status,
+    val isFavorite: Boolean,
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -87,16 +96,19 @@ private fun BrowseScreen(
     onPoiTap: (Poi) -> Unit,
     onBack: () -> Unit,
 ) {
-    val rows by produceState<List<BrowseRow>?>(initialValue = null, key1 = category) {
+    var refreshKey by remember { mutableIntStateOf(0) }
+    val scope = rememberCoroutineScope()
+    val rows by produceState<List<BrowseRow>?>(initialValue = null, key1 = category, key2 = refreshKey) {
         value = withContext(Dispatchers.IO) {
             val rider = karoo.locationFlow.first()
             val nowLdt = LocalDateTime.now()
             karoo.store()
                 .nearest(rider.point, category, maxMeters = 30_000.0, limit = 10)
-                .mapNotNull { (poi, distance) ->
+                .mapNotNull { hit ->
+                    val poi = hit.poi
                     val status = OpeningHours.evaluate(poi.openingHoursTag, nowLdt)
                     if (status is OpeningHours.Status.Closed) null
-                    else BrowseRow(poi, distance, status)
+                    else BrowseRow(poi, hit.distanceMeters, status, hit.isFavorite)
                 }
         }
     }
@@ -131,7 +143,18 @@ private fun BrowseScreen(
                 } else {
                     LazyColumn(modifier = Modifier.fillMaxSize()) {
                         items(list) { row ->
-                            PoiRow(row = row, onClick = { onPoiTap(row.poi) })
+                            PoiRow(
+                                row = row,
+                                onClick = { onPoiTap(row.poi) },
+                                onLongClick = {
+                                    scope.launch {
+                                        withContext(Dispatchers.IO) {
+                                            karoo.store().setFavorite(row.poi, !row.isFavorite)
+                                        }
+                                        refreshKey++
+                                    }
+                                },
+                            )
                             HorizontalDivider()
                         }
                     }
@@ -142,11 +165,12 @@ private fun BrowseScreen(
 }
 
 @Composable
-private fun PoiRow(row: BrowseRow, onClick: () -> Unit) {
+@OptIn(ExperimentalFoundationApi::class)
+private fun PoiRow(row: BrowseRow, onClick: () -> Unit, onLongClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick)
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -163,6 +187,17 @@ private fun PoiRow(row: BrowseRow, onClick: () -> Unit) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+        Icon(
+            imageVector = if (row.isFavorite) Icons.Filled.Star else Icons.Outlined.StarBorder,
+            contentDescription = stringResource(
+                if (row.isFavorite) R.string.poi_favorite else R.string.poi_not_favorite,
+            ),
+            tint = if (row.isFavorite) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            },
+        )
         Text(
             text = formatDistance(row.distanceMeters),
             style = MaterialTheme.typography.bodyMedium,
