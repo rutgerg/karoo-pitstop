@@ -10,14 +10,27 @@ import java.time.Instant
 
 class InMemoryPoiStore : PoiStore {
 
-    private val pois: MutableMap<Pair<String, Long>, Pair<Poi, Instant>> = mutableMapOf()
+    private data class Record(val poi: Poi, val fetchedAt: Instant, val isFavorite: Boolean)
+
+    private val pois: MutableMap<Pair<String, Long>, Record> = mutableMapOf()
     private val routeFetches: MutableSet<String> = mutableSetOf()
     var upsertCount: Int = 0
         private set
 
     override fun upsertAll(pois: List<Poi>, fetchedAt: Instant) {
-        pois.forEach { p -> this.pois[p.osmType to p.osmId] = p to fetchedAt }
+        pois.forEach { p ->
+            val key = p.osmType to p.osmId
+            this.pois[key] = Record(p, fetchedAt, this.pois[key]?.isFavorite ?: false)
+        }
         upsertCount++
+    }
+
+    override fun setFavorite(poi: Poi, isFavorite: Boolean) {
+        val key = poi.osmType to poi.osmId
+        val existing = pois[key]
+        if (existing != null) {
+            pois[key] = existing.copy(isFavorite = isFavorite)
+        }
     }
 
     override fun count(): Int = pois.size
@@ -32,12 +45,19 @@ class InMemoryPoiStore : PoiStore {
     ): List<NearbyHit> {
         val cutoff = now.minusSeconds(maxAgeDays * 86_400L)
         return pois.values
-            .filter { (poi, fetchedAt) -> poi.category == category && fetchedAt.isAfter(cutoff) }
-            .map { (poi, fetchedAt) ->
-                NearbyHit(poi, Geo.haversineMeters(center, LatLng(poi.lat, poi.lon)), fetchedAt)
+            .filter { record ->
+                record.poi.category == category && (record.fetchedAt.isAfter(cutoff) || record.isFavorite)
+            }
+            .map { record ->
+                NearbyHit(
+                    record.poi,
+                    Geo.haversineMeters(center, LatLng(record.poi.lat, record.poi.lon)),
+                    record.fetchedAt,
+                    record.isFavorite,
+                )
             }
             .filter { it.distanceMeters <= maxMeters }
-            .sortedBy { it.distanceMeters }
+            .sortedWith(compareByDescending<NearbyHit> { it.isFavorite }.thenBy { it.distanceMeters })
             .take(limit)
     }
 

@@ -25,6 +25,7 @@ class AndroidPoiStore(context: Context) : SQLiteOpenHelper(
               lon REAL NOT NULL,
               opening_hours_tag TEXT,
               fetched_at INTEGER NOT NULL,
+              is_favorite INTEGER NOT NULL DEFAULT 0,
               PRIMARY KEY (osm_type, osm_id)
             )
             """.trimIndent()
@@ -40,6 +41,9 @@ class AndroidPoiStore(context: Context) : SQLiteOpenHelper(
             db.execSQL(
                 "CREATE TABLE IF NOT EXISTS route_fetches (route_id TEXT PRIMARY KEY, fetched_at INTEGER NOT NULL)"
             )
+        }
+        if (oldVersion < 3) {
+            db.execSQL("ALTER TABLE pois ADD COLUMN is_favorite INTEGER NOT NULL DEFAULT 0")
         }
     }
 
@@ -57,13 +61,37 @@ class AndroidPoiStore(context: Context) : SQLiteOpenHelper(
                     put("lon", p.lon)
                     put("opening_hours_tag", p.openingHoursTag)
                     put("fetched_at", fetchedAt.toEpochMilli())
+                    put("is_favorite", 0)
                 }
-                db.insertWithOnConflict("pois", null, cv, SQLiteDatabase.CONFLICT_REPLACE)
+                val inserted = db.insertWithOnConflict("pois", null, cv, SQLiteDatabase.CONFLICT_IGNORE)
+                if (inserted == -1L) {
+                    cv.remove("osm_type")
+                    cv.remove("osm_id")
+                    cv.remove("is_favorite")
+                    db.update(
+                        "pois",
+                        cv,
+                        "osm_type = ? AND osm_id = ?",
+                        arrayOf(p.osmType, p.osmId.toString()),
+                    )
+                }
             }
             db.setTransactionSuccessful()
         } finally {
             db.endTransaction()
         }
+    }
+
+    override fun setFavorite(poi: Poi, isFavorite: Boolean) {
+        val cv = ContentValues().apply {
+            put("is_favorite", if (isFavorite) 1 else 0)
+        }
+        writableDatabase.update(
+            "pois",
+            cv,
+            "osm_type = ? AND osm_id = ?",
+            arrayOf(poi.osmType, poi.osmId.toString()),
+        )
     }
 
     override fun count(): Int = readableDatabase.rawQuery("SELECT COUNT(*) FROM pois", null).use {
@@ -99,12 +127,12 @@ class AndroidPoiStore(context: Context) : SQLiteOpenHelper(
         val ageCutoffMillis = now.minusSeconds(maxAgeDays * 86_400L).toEpochMilli()
         val cursor = readableDatabase.rawQuery(
             """
-            SELECT osm_type, osm_id, name, category, lat, lon, opening_hours_tag, fetched_at
+            SELECT osm_type, osm_id, name, category, lat, lon, opening_hours_tag, fetched_at, is_favorite
             FROM pois
             WHERE category = ?
               AND lat BETWEEN ? AND ?
               AND lon BETWEEN ? AND ?
-              AND fetched_at > ?
+              AND (fetched_at > ? OR is_favorite = 1)
             """.trimIndent(),
             arrayOf(
                 category.name,
@@ -128,15 +156,18 @@ class AndroidPoiStore(context: Context) : SQLiteOpenHelper(
                     openingHoursTag = it.getString(6),
                 )
                 val fetchedAt = Instant.ofEpochMilli(it.getLong(7))
+                val isFavorite = it.getInt(8) != 0
                 val d = Geo.haversineMeters(center, LatLng(poi.lat, poi.lon))
-                if (d <= maxMeters) out += NearbyHit(poi, d, fetchedAt)
+                if (d <= maxMeters) out += NearbyHit(poi, d, fetchedAt, isFavorite)
             }
         }
-        return out.sortedBy { it.distanceMeters }.take(limit)
+        return out
+            .sortedWith(compareByDescending<NearbyHit> { it.isFavorite }.thenBy { it.distanceMeters })
+            .take(limit)
     }
 
     private companion object {
         const val DB_NAME = "pois.sqlite"
-        const val DB_VERSION = 2
+        const val DB_VERSION = 3
     }
 }
