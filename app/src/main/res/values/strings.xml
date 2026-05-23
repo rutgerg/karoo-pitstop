@@ -11,6 +11,7 @@
     <string name="category_bike_shop">Bike Shop</string>
     <string name="category_atm">ATM</string>
     <string name="category_train_station">Train Station</string>
+    <string name="category_water_refill">Water Refill</string>
     <string name="data_type_nearby_description">Nearest along the route</string>
     <string name="status_prefix">Status</string>
     <string name="hours_open_prefix">Open</string>

@@ -103,6 +103,7 @@ class KarooClient(
         PoiCategory.BIKE_SHOP -> Symbol.POI.Types.BIKE_SHOP
         PoiCategory.ATM -> Symbol.POI.Types.ATM
         PoiCategory.TRAIN_STATION -> Symbol.POI.Types.TRANSIT_CENTER
+        PoiCategory.WATER_REFILL -> Symbol.POI.Types.WATER
     }
 
     private fun OnNavigationState.NavigationState.toRoute(): Route? = when (this) {
