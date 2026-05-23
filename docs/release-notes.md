@@ -2,6 +2,10 @@
 
 User-facing notes per `vX.Y.Z` release. The release workflow extracts the section matching the current tag and pipes it into the Karoo App Manifest as `releaseNotes`, where it appears in the Karoo extension About panel. Add a new `## X.Y.Z` section at the top before tagging.
 
+## 1.5.1
+
+- The Karoo Extensions About panel description now mentions the Water Refill tile shipped in 1.5.0. No functional changes.
+
 ## 1.5.0
 
 - New Water Refill tile — surfaces the nearest drinking-water tap, public toilet, or cemetery along the route. Cemeteries are included because they very often have an outdoor tap, which makes them a useful fallback in rural areas where a dedicated drinking_water node is missing.
