@@ -78,6 +78,23 @@ class PoiCategoryTagsTest {
     }
 
     @Test
+    fun `water refill maps from drinking_water toilets cemetery and grave_yard`() {
+        assertEquals(PoiCategory.WATER_REFILL, PoiCategory.fromTags(mapOf("amenity" to "drinking_water")))
+        assertEquals(PoiCategory.WATER_REFILL, PoiCategory.fromTags(mapOf("amenity" to "toilets")))
+        assertEquals(PoiCategory.WATER_REFILL, PoiCategory.fromTags(mapOf("landuse" to "cemetery")))
+        assertEquals(PoiCategory.WATER_REFILL, PoiCategory.fromTags(mapOf("amenity" to "grave_yard")))
+    }
+
+    @Test
+    fun `water refill does not match wells fountains or other water tags`() {
+        // man_made=water_well often non-potable (irrigation), amenity=fountain often decorative.
+        // Out of scope until real-ride feedback says otherwise.
+        assertNull(PoiCategory.fromTags(mapOf("man_made" to "water_well")))
+        assertNull(PoiCategory.fromTags(mapOf("man_made" to "water_tap")))
+        assertNull(PoiCategory.fromTags(mapOf("amenity" to "fountain")))
+    }
+
+    @Test
     fun `unrelated tags resolve to null`() {
         assertNull(PoiCategory.fromTags(mapOf("amenity" to "library")))
         assertNull(PoiCategory.fromTags(mapOf("shop" to "clothes")))

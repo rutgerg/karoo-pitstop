@@ -8,7 +8,7 @@ karoo_restaurant/
 │       ├── KarooClient.kt                            wraps the system port, exposes locationFlow + routeFlow + navigateTo
 │       ├── KarooSystemPort.kt                        port over KarooSystemService; production + fake share the interface
 │       ├── RouteWatcher.kt                           collects routeFlow, prefetches corridor, exposes RouteFetchState
-│       ├── RestaurantExtensionService.kt             KarooExtension service; registers the nine DataTypeImpl tiles
+│       ├── RestaurantExtensionService.kt             KarooExtension service; registers the per-category DataTypeImpl tiles
 │       ├── NearbyPoiDataType.kt                      per-category data tile rendering distance + name + opening hours
 │       ├── NearbyPicks.kt                            shared compute for tile + Activity picker
 │       ├── LaunchPoiReceiver.kt                      tile-tap broadcast → KarooClient.navigateTo

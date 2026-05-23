@@ -66,4 +66,10 @@
         description="@string/data_type_nearby_description"
         graphical="true"
         icon="@drawable/ic_train_station" />
+    <DataType
+        typeId="nearby_water_refill"
+        displayName="@string/category_water_refill"
+        description="@string/data_type_nearby_description"
+        graphical="true"
+        icon="@drawable/ic_water_refill" />
 </ExtensionInfo>
