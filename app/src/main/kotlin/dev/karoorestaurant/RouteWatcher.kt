@@ -1,6 +1,7 @@
 package dev.karoorestaurant
 
 import android.util.Log
+import dev.karoorestaurant.data.poi.PoiCategory
 import dev.karoorestaurant.data.route.CorridorSlicer
 import dev.karoorestaurant.data.route.Route
 import dev.karoorestaurant.telemetry.Telemetry
@@ -59,9 +60,11 @@ class RouteWatcher(
             _state.value = RouteFetchState.Idle
             return
         }
-        if (karoo.store().wasRouteFetched(route.id)) {
+        val current = PoiCategory.entries.toSet()
+        val missing = current - karoo.store().fetchedCategories(route.id)
+        if (missing.isEmpty()) {
             _state.value = RouteFetchState.Cached(route.name, karoo.store().count())
-            Log.i(TAG, "route ${route.id} already cached")
+            Log.i(TAG, "route ${route.id} already cached for every current category")
             return
         }
 
@@ -69,7 +72,7 @@ class RouteWatcher(
         var attempts = 0
         while (attempts < maxAttempts) {
             attempts++
-            if (fetchOnce(route, attempts)) {
+            if (fetchOnce(route, attempts, missing, current)) {
                 recordOutcome(route, windowCount, attempts)
                 return
             }
@@ -112,12 +115,20 @@ class RouteWatcher(
         diary.record(entry)
     }
 
-    private suspend fun fetchOnce(route: Route, attempt: Int): Boolean {
+    private suspend fun fetchOnce(
+        route: Route,
+        attempt: Int,
+        missing: Set<PoiCategory>,
+        current: Set<PoiCategory>,
+    ): Boolean {
         _state.value = RouteFetchState.Fetching(route.name)
-        Log.i(TAG, "fetching corridor for ${route.name} attempt $attempt")
+        Log.i(TAG, "fetching corridor for ${route.name} attempt $attempt categories=$missing")
         return try {
-            val count = karoo.refreshAroundCorridor(route.polyline)
-            karoo.store().recordRouteFetch(route.id)
+            val count = karoo.refreshAroundCorridor(route.polyline, categories = missing)
+            // Persist the full current category set, not just `missing`, so a future
+            // ride sees this route as fully covered. Prior categories already had data
+            // in the cache; this fetch added the missing ones on top.
+            karoo.store().recordRouteFetch(route.id, categories = current)
             telemetry?.recordPrefetch()
             _state.value = RouteFetchState.Cached(route.name, count)
             true

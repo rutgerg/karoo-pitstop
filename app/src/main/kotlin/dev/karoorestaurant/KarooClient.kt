@@ -64,15 +64,22 @@ class KarooClient(
         return pois.size
     }
 
-    suspend fun refreshAroundCorridor(polyline: List<LatLng>, radiusMeters: Int = 10_000): Int {
+    suspend fun refreshAroundCorridor(
+        polyline: List<LatLng>,
+        radiusMeters: Int = 10_000,
+        categories: Set<PoiCategory>? = null,
+    ): Int {
         val windows = CorridorSlicer.windows(polyline)
         if (windows.isEmpty()) {
             Log.w(TAG, "refresh corridor: empty polyline, nothing to fetch")
             return 0
         }
-        val pois = overpass(windows, radiusMeters, null)
+        val pois = overpass(windows, radiusMeters, categories)
         store.upsertAll(pois)
-        Log.i(TAG, "refresh corridor: ${windows.size} windows → ${pois.size} POIs")
+        Log.i(
+            TAG,
+            "refresh corridor: ${windows.size} windows → ${pois.size} POIs categories=${categories ?: "all"}",
+        )
         return pois.size
     }
 

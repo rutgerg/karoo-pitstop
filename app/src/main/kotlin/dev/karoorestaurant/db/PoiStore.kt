@@ -24,6 +24,17 @@ interface PoiStore {
         maxAgeDays: Long = 60L,
     ): List<NearbyHit>
 
-    fun recordRouteFetch(routeId: String, fetchedAt: Instant = Instant.now())
-    fun wasRouteFetched(routeId: String): Boolean
+    fun recordRouteFetch(
+        routeId: String,
+        categories: Set<PoiCategory>,
+        fetchedAt: Instant = Instant.now(),
+    )
+
+    /**
+     * Categories that have been successfully fetched for [routeId], or empty if the
+     * route has never been fetched. RouteWatcher uses this to compute which categories
+     * still need a query when the active category set has grown since the prior fetch
+     * (e.g., a category added in a new app release).
+     */
+    fun fetchedCategories(routeId: String): Set<PoiCategory>
 }
