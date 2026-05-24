@@ -14,7 +14,6 @@ import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
@@ -79,7 +78,7 @@ class RouteWatcherTest {
 
         // The route id is the polyline's hashCode.toString().
         val routeId = testPolyline.hashCode().toString()
-        assertTrue(store.wasRouteFetched(routeId))
+        assertEquals(PoiCategory.entries.toSet(), store.fetchedCategories(routeId))
     }
 
     @Test
@@ -240,8 +239,8 @@ class RouteWatcherTest {
     fun `diary records nothing when route was already cached`() = runTest {
         val port = FakeKarooSystemPort()
         val store = InMemoryPoiStore()
-        // Pre-mark the route as fetched so handleRoute short-circuits.
-        store.recordRouteFetch(testPolyline.hashCode().toString())
+        // Pre-mark the route as fetched for every current category so handleRoute short-circuits.
+        store.recordRouteFetch(testPolyline.hashCode().toString(), PoiCategory.entries.toSet())
         val client = KarooClient(port, store, overpass = { _, _, _ -> fixturePois })
         val diary = FetchDiary(FakeSharedPreferences(), nowEpochMillis = { 1L })
         val watcherScope = CoroutineScope(SupervisorJob() + UnconfinedTestDispatcher(testScheduler))
@@ -352,8 +351,8 @@ class RouteWatcherTest {
         advanceUntilIdle()
         assertEquals(3, fetchCount, "first emit exhausts maxAttempts")
         assertTrue(watcher.state.value is RouteFetchState.Error)
-        assertFalse(
-            store.wasRouteFetched(testPolyline.hashCode().toString()),
+        assertTrue(
+            store.fetchedCategories(testPolyline.hashCode().toString()).isEmpty(),
             "terminal failure must not record the route as fetched",
         )
 
@@ -366,7 +365,65 @@ class RouteWatcherTest {
 
         assertEquals(4, fetchCount, "re-emit after Idle must trigger a fresh attempt on the same route")
         assertTrue(watcher.state.value is RouteFetchState.Cached)
-        assertTrue(store.wasRouteFetched(testPolyline.hashCode().toString()))
+        assertEquals(
+            PoiCategory.entries.toSet(),
+            store.fetchedCategories(testPolyline.hashCode().toString()),
+        )
+    }
+
+    @Test
+    fun `fetches only the missing categories when prior fetch covered a subset`() = runTest {
+        // The scenario from issue #189: rider cached this route in an older app version
+        // that only knew about ten categories. After upgrading, the eleventh category
+        // (Water Refill) is missing for the same route id and must be filled in.
+        val port = FakeKarooSystemPort()
+        val store = InMemoryPoiStore()
+        val routeId = testPolyline.hashCode().toString()
+        val priorlyFetched = PoiCategory.entries.toSet() - PoiCategory.WATER_REFILL
+        store.recordRouteFetch(routeId, priorlyFetched)
+
+        var fetchCount = 0
+        var lastCategories: Set<PoiCategory>? = null
+        val client = KarooClient(port, store, overpass = { _, _, categories ->
+            fetchCount++
+            lastCategories = categories
+            fixturePois
+        })
+        val watcherScope = CoroutineScope(SupervisorJob() + UnconfinedTestDispatcher(testScheduler))
+        RouteWatcher(client, scope = watcherScope).start()
+
+        port.emitNavigationState(navigatingRoute(testPolyline))
+        advanceUntilIdle()
+
+        assertEquals(1, fetchCount, "missing category must trigger a fetch")
+        assertEquals(setOf(PoiCategory.WATER_REFILL), lastCategories, "fetch must request only the missing category")
+        assertEquals(
+            PoiCategory.entries.toSet(),
+            store.fetchedCategories(routeId),
+            "after a successful diff fetch, the route's recorded set must reflect every current category",
+        )
+    }
+
+    @Test
+    fun `does not fetch when prior fetch already covers every current category`() = runTest {
+        val port = FakeKarooSystemPort()
+        val store = InMemoryPoiStore()
+        store.recordRouteFetch(testPolyline.hashCode().toString(), PoiCategory.entries.toSet())
+
+        var fetchCount = 0
+        val client = KarooClient(port, store, overpass = { _, _, _ ->
+            fetchCount++
+            fixturePois
+        })
+        val watcherScope = CoroutineScope(SupervisorJob() + UnconfinedTestDispatcher(testScheduler))
+        val watcher = RouteWatcher(client, scope = watcherScope)
+        watcher.start()
+
+        port.emitNavigationState(navigatingRoute(testPolyline))
+        advanceUntilIdle()
+
+        assertEquals(0, fetchCount, "fully cached route must not trigger any fetch")
+        assertTrue(watcher.state.value is RouteFetchState.Cached)
     }
 
     @Test
@@ -390,8 +447,9 @@ class RouteWatcherTest {
 
         assertEquals(2, fetchCount)
         assertNotEquals(testPolyline.hashCode(), otherPolyline.hashCode())
-        assertTrue(store.wasRouteFetched(testPolyline.hashCode().toString()))
-        assertTrue(store.wasRouteFetched(otherPolyline.hashCode().toString()))
+        val expected = PoiCategory.entries.toSet()
+        assertEquals(expected, store.fetchedCategories(testPolyline.hashCode().toString()))
+        assertEquals(expected, store.fetchedCategories(otherPolyline.hashCode().toString()))
     }
 
     private class FakeConnectivityWatcher : ConnectivityWatcher {

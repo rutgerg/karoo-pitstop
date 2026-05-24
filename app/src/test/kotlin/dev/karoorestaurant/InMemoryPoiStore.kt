@@ -11,7 +11,7 @@ import java.time.Instant
 class InMemoryPoiStore : PoiStore {
 
     private val pois: MutableMap<Pair<String, Long>, Pair<Poi, Instant>> = mutableMapOf()
-    private val routeFetches: MutableSet<String> = mutableSetOf()
+    private val routeFetches: MutableMap<String, Set<PoiCategory>> = mutableMapOf()
     var upsertCount: Int = 0
         private set
 
@@ -41,9 +41,14 @@ class InMemoryPoiStore : PoiStore {
             .take(limit)
     }
 
-    override fun recordRouteFetch(routeId: String, fetchedAt: Instant) {
-        routeFetches.add(routeId)
+    override fun recordRouteFetch(
+        routeId: String,
+        categories: Set<PoiCategory>,
+        fetchedAt: Instant,
+    ) {
+        routeFetches[routeId] = categories
     }
 
-    override fun wasRouteFetched(routeId: String): Boolean = routeId in routeFetches
+    override fun fetchedCategories(routeId: String): Set<PoiCategory> =
+        routeFetches[routeId] ?: emptySet()
 }

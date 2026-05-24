@@ -31,7 +31,13 @@ class AndroidPoiStore(context: Context) : SQLiteOpenHelper(
         )
         db.execSQL("CREATE INDEX idx_pois_bbox ON pois(lat, lon)")
         db.execSQL(
-            "CREATE TABLE route_fetches (route_id TEXT PRIMARY KEY, fetched_at INTEGER NOT NULL)"
+            """
+            CREATE TABLE route_fetches (
+              route_id TEXT PRIMARY KEY,
+              fetched_at INTEGER NOT NULL,
+              categories TEXT NOT NULL DEFAULT ''
+            )
+            """.trimIndent()
         )
     }
 
@@ -39,6 +45,19 @@ class AndroidPoiStore(context: Context) : SQLiteOpenHelper(
         if (oldVersion < 2) {
             db.execSQL(
                 "CREATE TABLE IF NOT EXISTS route_fetches (route_id TEXT PRIMARY KEY, fetched_at INTEGER NOT NULL)"
+            )
+        }
+        if (oldVersion < 3) {
+            // v3 adds a per-route category set so a new POI category can backfill on
+            // the next ride without invalidating the categories already in cache.
+            // Existing rows predate Water Refill (1.5.0), so we backfill them with the
+            // pre-1.5.0 ten-category set; the rider's next ride fetches only what's
+            // missing relative to the current category set.
+            db.execSQL(
+                "ALTER TABLE route_fetches ADD COLUMN categories TEXT NOT NULL DEFAULT ''"
+            )
+            db.execSQL(
+                "UPDATE route_fetches SET categories = '$PRE_WATER_REFILL_CATEGORIES'"
             )
         }
     }
@@ -70,21 +89,28 @@ class AndroidPoiStore(context: Context) : SQLiteOpenHelper(
         if (it.moveToFirst()) it.getInt(0) else 0
     }
 
-    override fun recordRouteFetch(routeId: String, fetchedAt: Instant) {
+    override fun recordRouteFetch(
+        routeId: String,
+        categories: Set<PoiCategory>,
+        fetchedAt: Instant,
+    ) {
         val cv = ContentValues().apply {
             put("route_id", routeId)
             put("fetched_at", fetchedAt.toEpochMilli())
+            put("categories", serializeCategories(categories))
         }
         writableDatabase.insertWithOnConflict(
             "route_fetches", null, cv, SQLiteDatabase.CONFLICT_REPLACE,
         )
     }
 
-    override fun wasRouteFetched(routeId: String): Boolean =
+    override fun fetchedCategories(routeId: String): Set<PoiCategory> =
         readableDatabase.rawQuery(
-            "SELECT 1 FROM route_fetches WHERE route_id = ? LIMIT 1",
+            "SELECT categories FROM route_fetches WHERE route_id = ? LIMIT 1",
             arrayOf(routeId),
-        ).use { it.moveToFirst() }
+        ).use { cursor ->
+            if (cursor.moveToFirst()) deserializeCategories(cursor.getString(0)) else emptySet()
+        }
 
     override fun nearest(
         center: LatLng,
@@ -137,6 +163,22 @@ class AndroidPoiStore(context: Context) : SQLiteOpenHelper(
 
     private companion object {
         const val DB_NAME = "pois.sqlite"
-        const val DB_VERSION = 2
+        const val DB_VERSION = 3
+
+        // Sorted comma-joined names of the ten POI categories that shipped before
+        // Water Refill (1.5.0). Used to backfill the new `categories` column for rows
+        // written by earlier versions of the app.
+        const val PRE_WATER_REFILL_CATEGORIES =
+            "ATM,BIKE_SHOP,CAFE,DOCTOR,FUEL,HOTEL,PHARMACY,RESTAURANT,SUPERMARKET,TRAIN_STATION"
+
+        fun serializeCategories(categories: Set<PoiCategory>): String =
+            categories.map { it.name }.sorted().joinToString(",")
+
+        fun deserializeCategories(stored: String?): Set<PoiCategory> {
+            if (stored.isNullOrBlank()) return emptySet()
+            return stored.split(",").mapNotNullTo(mutableSetOf()) { name ->
+                runCatching { PoiCategory.valueOf(name.trim()) }.getOrNull()
+            }
+        }
     }
 }
