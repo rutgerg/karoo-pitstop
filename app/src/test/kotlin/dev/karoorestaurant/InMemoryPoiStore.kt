@@ -51,4 +51,9 @@ class InMemoryPoiStore : PoiStore {
 
     override fun fetchedCategories(routeId: String): Set<PoiCategory> =
         routeFetches[routeId] ?: emptySet()
+
+    override fun clearAll() {
+        pois.clear()
+        routeFetches.clear()
+    }
 }
