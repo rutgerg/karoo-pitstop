@@ -37,4 +37,11 @@ interface PoiStore {
      * (e.g., a category added in a new app release).
      */
     fun fetchedCategories(routeId: String): Set<PoiCategory>
+
+    /**
+     * Wipe every cached POI and route-fetch record. Used by the debug-only
+     * "Reset POI cache" action so the next route load forces a fresh Overpass
+     * fetch instead of reading stale cross-region rows.
+     */
+    fun clearAll()
 }

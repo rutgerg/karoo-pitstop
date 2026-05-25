@@ -53,6 +53,11 @@ class KarooClient(
 
     fun store(): PoiStore = store
 
+    fun clearPoiCache() {
+        store.clearAll()
+        Log.i(TAG, "clearPoiCache: wiped pois and route_fetches")
+    }
+
     suspend fun refreshAround(
         center: LatLng,
         radiusMeters: Int = 10_000,

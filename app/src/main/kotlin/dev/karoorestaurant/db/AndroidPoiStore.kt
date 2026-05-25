@@ -112,6 +112,18 @@ class AndroidPoiStore(context: Context) : SQLiteOpenHelper(
             if (cursor.moveToFirst()) deserializeCategories(cursor.getString(0)) else emptySet()
         }
 
+    override fun clearAll() {
+        val db = writableDatabase
+        db.beginTransaction()
+        try {
+            db.execSQL("DELETE FROM pois")
+            db.execSQL("DELETE FROM route_fetches")
+            db.setTransactionSuccessful()
+        } finally {
+            db.endTransaction()
+        }
+    }
+
     override fun nearest(
         center: LatLng,
         category: PoiCategory,
