@@ -68,10 +68,9 @@ class NearbyPoiDataType(
         placeholderRes: Int,
     ): RemoteViews {
         val views = RemoteViews(context.packageName, R.layout.data_field_nearby_poi)
-        val mainText = pick?.let { buildPoiLine(it, rider) }
+        val mainText = pick?.let { buildPoiLine(it, rider, statusColor(it.status)) }
             ?: context.getString(placeholderRes)
         views.setTextViewText(R.id.poi_text, mainText)
-        views.setTextColor(R.id.poi_text, statusColor(pick?.status))
 
         val hoursText = pick?.let { formatHours(it) }
         if (hoursText.isNullOrBlank()) {
@@ -116,24 +115,31 @@ class NearbyPoiDataType(
     private fun formatDistance(meters: Double): String =
         if (meters < 1000.0) "${meters.toInt()} m" else "%.1f km".format(meters / 1000.0)
 
-    private fun buildPoiLine(pick: PoiNearby, rider: RiderLocation?): CharSequence {
+    private fun buildPoiLine(pick: PoiNearby, rider: RiderLocation?, statusColor: Int): CharSequence {
         val arrow = directionArrow(pick, rider)
         val tail = "${formatDistance(pick.distanceMeters)}  ${pick.poi.name}"
-        if (arrow == null) return tail
-        val full = "$arrow $tail"
+        val full = if (arrow == null) tail else "$arrow $tail"
         return SpannableString(full).apply {
             setSpan(
-                RelativeSizeSpan(ARROW_SCALE),
+                ForegroundColorSpan(statusColor),
                 0,
-                1,
+                length,
                 Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
             )
-            setSpan(
-                ForegroundColorSpan(ARROW_COLOR),
-                0,
-                1,
-                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
-            )
+            if (arrow != null) {
+                setSpan(
+                    RelativeSizeSpan(ARROW_SCALE),
+                    0,
+                    1,
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
+                )
+                setSpan(
+                    ForegroundColorSpan(ARROW_COLOR),
+                    0,
+                    1,
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
+                )
+            }
         }
     }
 
