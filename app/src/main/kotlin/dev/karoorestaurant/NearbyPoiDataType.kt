@@ -68,11 +68,11 @@ class NearbyPoiDataType(
         placeholderRes: Int,
     ): RemoteViews {
         val views = RemoteViews(context.packageName, R.layout.data_field_nearby_poi)
-        val mainText = pick?.let { buildPoiLine(it, rider) }
+        val mainText = pick?.let { buildPoiLine(it, rider, statusColor(it.status)) }
             ?: context.getString(placeholderRes)
         views.setTextViewText(R.id.poi_text, mainText)
 
-        val hoursText = pick?.let { formatHours(context, it) }
+        val hoursText = pick?.let { formatHours(it) }
         if (hoursText.isNullOrBlank()) {
             views.setViewVisibility(R.id.poi_hours, View.GONE)
         } else {
@@ -84,15 +84,14 @@ class NearbyPoiDataType(
         return views
     }
 
-    private fun formatHours(context: Context, pick: PoiNearby): String? {
-        val statusWord = when (pick.status) {
-            OpeningHours.Status.Open -> context.getString(R.string.hours_open_prefix)
-            OpeningHours.Status.Closed -> context.getString(R.string.hours_closed)
-            is OpeningHours.Status.Unknown -> context.getString(R.string.hours_unknown)
-        }
-        val hoursPart = "${context.getString(R.string.status_prefix)}: $statusWord"
-        val unverified = if (pick.staleness == Staleness.AGING) "unverified" else null
-        return listOfNotNull(hoursPart, unverified).joinToString(" · ")
+    private fun formatHours(pick: PoiNearby): String? =
+        if (pick.staleness == Staleness.AGING) "unverified" else null
+
+    private fun statusColor(status: OpeningHours.Status?): Int = when (status) {
+        OpeningHours.Status.Open -> COLOR_OPEN
+        OpeningHours.Status.Closed -> COLOR_CLOSED
+        is OpeningHours.Status.Unknown -> COLOR_UNKNOWN
+        null -> COLOR_DEFAULT
     }
 
     private fun buildLaunchPendingIntent(context: Context, poi: Poi): PendingIntent {
@@ -116,24 +115,31 @@ class NearbyPoiDataType(
     private fun formatDistance(meters: Double): String =
         if (meters < 1000.0) "${meters.toInt()} m" else "%.1f km".format(meters / 1000.0)
 
-    private fun buildPoiLine(pick: PoiNearby, rider: RiderLocation?): CharSequence {
+    private fun buildPoiLine(pick: PoiNearby, rider: RiderLocation?, statusColor: Int): CharSequence {
         val arrow = directionArrow(pick, rider)
         val tail = "${formatDistance(pick.distanceMeters)}  ${pick.poi.name}"
-        if (arrow == null) return tail
-        val full = "$arrow $tail"
+        val full = if (arrow == null) tail else "$arrow $tail"
         return SpannableString(full).apply {
             setSpan(
-                RelativeSizeSpan(ARROW_SCALE),
+                ForegroundColorSpan(statusColor),
                 0,
-                1,
+                length,
                 Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
             )
-            setSpan(
-                ForegroundColorSpan(ARROW_COLOR),
-                0,
-                1,
-                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
-            )
+            if (arrow != null) {
+                setSpan(
+                    RelativeSizeSpan(ARROW_SCALE),
+                    0,
+                    1,
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
+                )
+                setSpan(
+                    ForegroundColorSpan(ARROW_COLOR),
+                    0,
+                    1,
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
+                )
+            }
         }
     }
 
@@ -145,6 +151,10 @@ class NearbyPoiDataType(
 
     companion object {
         private val ARROW_COLOR = Color.parseColor("#3B9EFF")
+        private val COLOR_OPEN = Color.parseColor("#5BE584")
+        private val COLOR_UNKNOWN = Color.parseColor("#FFB74D")
+        private val COLOR_CLOSED = Color.parseColor("#FF6B6B")
+        private val COLOR_DEFAULT = Color.parseColor("#FFFFFF")
         private const val ARROW_SCALE = 1.5f
         const val TYPE_RESTAURANT = "nearby_restaurant"
         const val TYPE_SUPERMARKET = "nearby_supermarket"
