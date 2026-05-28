@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.stateIn
 internal val Context.settingsDataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 
 internal val KEY_TELEMETRY_ENABLED = booleanPreferencesKey("telemetry_enabled")
+internal val KEY_SHOW_CLOSED_POIS = booleanPreferencesKey("show_closed_pois")
 
 class SettingsRepository internal constructor(
     private val dataStore: DataStore<Preferences>,
@@ -32,11 +33,24 @@ class SettingsRepository internal constructor(
             initialValue = DEFAULT_TELEMETRY_ENABLED,
         )
 
+    val showClosedPois: StateFlow<Boolean> = dataStore.data
+        .map { it[KEY_SHOW_CLOSED_POIS] ?: DEFAULT_SHOW_CLOSED_POIS }
+        .stateIn(
+            scope = scope,
+            started = SharingStarted.Eagerly,
+            initialValue = DEFAULT_SHOW_CLOSED_POIS,
+        )
+
     suspend fun setTelemetryEnabled(value: Boolean) {
         dataStore.edit { it[KEY_TELEMETRY_ENABLED] = value }
     }
 
+    suspend fun setShowClosedPois(value: Boolean) {
+        dataStore.edit { it[KEY_SHOW_CLOSED_POIS] = value }
+    }
+
     companion object {
         const val DEFAULT_TELEMETRY_ENABLED: Boolean = true
+        const val DEFAULT_SHOW_CLOSED_POIS: Boolean = false
     }
 }

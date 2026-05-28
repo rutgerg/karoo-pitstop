@@ -15,6 +15,7 @@ import dev.karoorestaurant.data.poi.Poi
 import dev.karoorestaurant.data.poi.PoiCategory
 import dev.karoorestaurant.data.route.Geo
 import dev.karoorestaurant.data.route.LatLng
+import dev.karoorestaurant.settings.SettingsRepository
 import io.hammerhead.karooext.extension.DataTypeImpl
 import io.hammerhead.karooext.internal.ViewEmitter
 import io.hammerhead.karooext.models.ViewConfig
@@ -36,6 +37,7 @@ class NearbyPoiDataType(
     private val category: PoiCategory,
     typeId: String,
     private val routeFetchState: StateFlow<RouteFetchState> = MutableStateFlow(RouteFetchState.Idle),
+    private val showClosedPois: StateFlow<Boolean> = MutableStateFlow(SettingsRepository.DEFAULT_SHOW_CLOSED_POIS),
 ) : DataTypeImpl(extension = RestaurantExtensionService.EXTENSION_ID, typeId = typeId) {
 
     override fun startView(context: Context, config: ViewConfig, emitter: ViewEmitter) {
@@ -50,9 +52,10 @@ class NearbyPoiDataType(
             combine(
                 karoo.locationFlow.sample(SAMPLE_MS),
                 routeFetchState,
-            ) { rider, state -> rider to state }.collect { (rider, state) ->
+                showClosedPois,
+            ) { rider, state, showClosed -> Triple(rider, state, showClosed) }.collect { (rider, state, showClosed) ->
                 val pick = withContext(Dispatchers.IO) {
-                    tilePick(computeNearbyPicks(karoo, rider.point), category)
+                    tilePick(computeNearbyPicks(karoo, rider.point, showClosed), category)
                 }
                 emitter.updateView(
                     buildView(context, pick = pick, rider = rider, placeholderRes = placeholderFor(state)),

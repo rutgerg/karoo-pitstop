@@ -69,6 +69,7 @@ private fun SettingsScreen(
     onBack: () -> Unit,
 ) {
     val telemetryEnabled by repository.telemetryEnabled.collectAsState()
+    val showClosedPois by repository.showClosedPois.collectAsState()
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
     var showResetConfirm by remember { mutableStateOf(false) }
@@ -83,6 +84,12 @@ private fun SettingsScreen(
                 modifier = Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
+                ShowClosedPoisRow(
+                    checked = showClosedPois,
+                    onCheckedChange = { newValue ->
+                        coroutineScope.launch { repository.setShowClosedPois(newValue) }
+                    },
+                )
                 TelemetryRow(
                     checked = telemetryEnabled,
                     onCheckedChange = { newValue ->
@@ -188,6 +195,30 @@ private fun TelemetryRow(
             )
             Text(
                 stringResource(R.string.settings_telemetry_subtitle),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Switch(checked = checked, onCheckedChange = onCheckedChange)
+    }
+}
+
+@Composable
+private fun ShowClosedPoisRow(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                stringResource(R.string.settings_show_closed_pois_title),
+                style = MaterialTheme.typography.bodyLarge,
+            )
+            Text(
+                stringResource(R.string.settings_show_closed_pois_subtitle),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
