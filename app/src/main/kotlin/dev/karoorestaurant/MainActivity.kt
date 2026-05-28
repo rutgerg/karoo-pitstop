@@ -84,16 +84,16 @@ private fun SettingsScreen(
                 modifier = Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                TelemetryRow(
-                    checked = telemetryEnabled,
-                    onCheckedChange = { newValue ->
-                        coroutineScope.launch { repository.setTelemetryEnabled(newValue) }
-                    },
-                )
                 ShowClosedPoisRow(
                     checked = showClosedPois,
                     onCheckedChange = { newValue ->
                         coroutineScope.launch { repository.setShowClosedPois(newValue) }
+                    },
+                )
+                TelemetryRow(
+                    checked = telemetryEnabled,
+                    onCheckedChange = { newValue ->
+                        coroutineScope.launch { repository.setTelemetryEnabled(newValue) }
                     },
                 )
                 if (BuildConfig.DEBUG) {
