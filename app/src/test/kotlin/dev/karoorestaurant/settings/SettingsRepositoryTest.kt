@@ -75,5 +75,49 @@ class SettingsRepositoryTest {
     @Test
     fun `default exposed as a constant matches the runtime default`() {
         assertEquals(true, SettingsRepository.DEFAULT_TELEMETRY_ENABLED)
+        assertEquals(false, SettingsRepository.DEFAULT_SHOW_CLOSED_POIS)
+    }
+
+    @Test
+    fun `default showClosedPois is false on a fresh install`() = runTest {
+        val scope = CoroutineScope(SupervisorJob() + UnconfinedTestDispatcher(testScheduler))
+        val repo = newRepository(scope)
+        advanceUntilIdle()
+
+        assertFalse(repo.showClosedPois.value)
+        scope.cancel()
+    }
+
+    @Test
+    fun `setShowClosedPois persists across repository instances`() = runTest {
+        val scope = CoroutineScope(SupervisorJob() + UnconfinedTestDispatcher(testScheduler))
+        val first = newRepository(scope)
+        first.setShowClosedPois(true)
+        advanceUntilIdle()
+        scope.cancel()
+
+        val scope2 = CoroutineScope(SupervisorJob() + UnconfinedTestDispatcher(testScheduler))
+        val second = newRepository(scope2)
+        advanceUntilIdle()
+
+        assertTrue(second.showClosedPois.value, "stored value must persist across instances")
+        scope2.cancel()
+    }
+
+    @Test
+    fun `showClosedPois flow emits the new value after setShowClosedPois`() = runTest {
+        val scope = CoroutineScope(SupervisorJob() + UnconfinedTestDispatcher(testScheduler))
+        val repo = newRepository(scope)
+        advanceUntilIdle()
+        assertFalse(repo.showClosedPois.value)
+
+        repo.setShowClosedPois(true)
+        advanceUntilIdle()
+        assertTrue(repo.showClosedPois.value)
+
+        repo.setShowClosedPois(false)
+        advanceUntilIdle()
+        assertFalse(repo.showClosedPois.value)
+        scope.cancel()
     }
 }
