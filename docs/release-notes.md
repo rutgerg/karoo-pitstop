@@ -2,6 +2,12 @@
 
 User-facing notes per `vX.Y.Z` release. The release workflow extracts the section matching the current tag and pipes it into the Karoo App Manifest as `releaseNotes`, where it appears in the Karoo extension About panel. Add a new `## X.Y.Z` section at the top before tagging.
 
+## 1.6.1
+
+- POI names on each tile are now color-coded by open status: green for open, orange for unknown opening hours, red for closed. The status text line is gone, freeing room for longer POI names.
+- New Show closed POIs setting, off by default. When off, each tile skips closed POIs and picks the next nearest open or unknown one. Turn it on to keep the previous behavior.
+- The Water Refill tile now also includes campsites. Many campsites have outdoor taps, showers, or toilets, making them a useful refill option in rural areas where dedicated drinking-water nodes are sparse.
+
 ## 1.6.0
 
 - POI names on each tile are now color-coded by open status: green for open, orange for unknown opening hours, red for closed. The status text line is gone, freeing room for longer POI names.
