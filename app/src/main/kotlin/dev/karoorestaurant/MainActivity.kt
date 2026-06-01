@@ -96,7 +96,7 @@ private fun SettingsScreen(
                         coroutineScope.launch { repository.setTelemetryEnabled(newValue) }
                     },
                 )
-                if (BuildConfig.DEBUG) {
+                if (BuildConfig.DEV_TOOLS) {
                     ResetPoisRow(onClick = { showResetConfirm = true })
                 }
             }
@@ -111,7 +111,7 @@ private fun SettingsScreen(
                     contentDescription = stringResource(R.string.action_back),
                 )
             }
-            val versionLabel = if (BuildConfig.DEBUG) {
+            val versionLabel = if (BuildConfig.DEV_TOOLS) {
                 "${BuildConfig.VERSION_NAME}-${stringResource(R.string.git_sha)}"
             } else {
                 BuildConfig.VERSION_NAME

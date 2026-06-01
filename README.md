@@ -95,6 +95,17 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 
 For a quicker turnaround during development, run from Studio: select the **app** run config, plug in the Karoo, click ▶︎.
 
+### Dev tools (Reset POI cache, git SHA in version label)
+
+The release workflow ships the debug variant of the APK (same signing key, in-place upgrades), so `BuildConfig.DEBUG` is always `true` on real installs. To keep dev-only UI (Reset POI cache row, git SHA suffix on the version label) out of released APKs, those gates use `BuildConfig.DEV_TOOLS` instead. Opt in for your local builds:
+
+```properties
+# ~/.gradle/gradle.properties
+pitstop.devTools=true
+```
+
+CI does not set the property, so released APKs ship with `DEV_TOOLS=false` and no dev-only UI.
+
 ## Run on the Pixel emulator
 
 The app installs and launches on a stock Pixel 7 emulator. Without a Karoo OS the SDK can't bind, so the data tiles never receive route/location events — but the launcher Activity (`MainActivity`) is the Settings screen, which renders without needing the Karoo SDK. Useful for verifying Settings renders cleanly and the telemetry toggle persists; not useful for the live tile cycle.

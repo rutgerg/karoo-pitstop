@@ -59,6 +59,8 @@ android {
             "SUPABASE_ANON_KEY",
             "\"${project.findProperty("supabase.anonKey") ?: ""}\"",
         )
+        val devTools = (project.findProperty("pitstop.devTools") as? String)?.toBoolean() ?: false
+        buildConfigField("boolean", "DEV_TOOLS", devTools.toString())
         // Use resValue, not buildConfigField — `public static final String` constants
         // get inlined into consumer .class files at compile time, so when only the SHA
         // changes between builds the cached MainActivity.class keeps the old folded
