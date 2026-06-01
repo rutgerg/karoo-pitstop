@@ -78,11 +78,12 @@ class PoiCategoryTagsTest {
     }
 
     @Test
-    fun `water refill maps from drinking_water toilets cemetery and grave_yard`() {
+    fun `water refill maps from drinking_water toilets cemetery grave_yard and camp_site`() {
         assertEquals(PoiCategory.WATER_REFILL, PoiCategory.fromTags(mapOf("amenity" to "drinking_water")))
         assertEquals(PoiCategory.WATER_REFILL, PoiCategory.fromTags(mapOf("amenity" to "toilets")))
         assertEquals(PoiCategory.WATER_REFILL, PoiCategory.fromTags(mapOf("landuse" to "cemetery")))
         assertEquals(PoiCategory.WATER_REFILL, PoiCategory.fromTags(mapOf("amenity" to "grave_yard")))
+        assertEquals(PoiCategory.WATER_REFILL, PoiCategory.fromTags(mapOf("tourism" to "camp_site")))
     }
 
     @Test

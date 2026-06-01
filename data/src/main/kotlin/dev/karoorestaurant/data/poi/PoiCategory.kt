@@ -25,7 +25,7 @@ enum class PoiCategory(val label: String) {
             "bike", "bike_shop", "bicycle" -> BIKE_SHOP
             "atm" -> ATM
             "train", "station", "train_station", "halt" -> TRAIN_STATION
-            "water", "water_refill", "drinking_water", "toilets", "cemetery", "grave_yard" -> WATER_REFILL
+            "water", "water_refill", "drinking_water", "toilets", "cemetery", "grave_yard", "camp_site", "camping" -> WATER_REFILL
             else -> null
         }
 
@@ -48,6 +48,7 @@ enum class PoiCategory(val label: String) {
                 railway in TRAIN_STATION_RAILWAY -> TRAIN_STATION
                 amenity in WATER_REFILL_AMENITIES -> WATER_REFILL
                 landuse == "cemetery" -> WATER_REFILL
+                tourism == "camp_site" -> WATER_REFILL
                 else -> null
             }
         }
