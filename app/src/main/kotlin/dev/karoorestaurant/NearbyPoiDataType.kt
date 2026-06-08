@@ -46,7 +46,15 @@ class NearbyPoiDataType(
         val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
         emitter.setCancellable { scope.cancel() }
 
-        emitter.updateView(buildView(context, pick = null, rider = null, placeholderRes = R.string.field_waiting))
+        emitter.updateView(
+            buildView(
+                context,
+                pick = null,
+                rider = null,
+                placeholderRes = R.string.field_waiting,
+                showStaleIcon = false,
+            ),
+        )
 
         scope.launch {
             combine(
@@ -58,7 +66,13 @@ class NearbyPoiDataType(
                     tilePick(computeNearbyPicks(karoo, rider.point, showClosed), category)
                 }
                 emitter.updateView(
-                    buildView(context, pick = pick, rider = rider, placeholderRes = placeholderFor(state)),
+                    buildView(
+                        context,
+                        pick = pick,
+                        rider = rider,
+                        placeholderRes = placeholderFor(state),
+                        showStaleIcon = pick != null && state !is RouteFetchState.Cached,
+                    ),
                 )
             }
         }
@@ -69,11 +83,14 @@ class NearbyPoiDataType(
         pick: PoiNearby?,
         rider: RiderLocation?,
         placeholderRes: Int,
+        showStaleIcon: Boolean,
     ): RemoteViews {
         val views = RemoteViews(context.packageName, R.layout.data_field_nearby_poi)
         val mainText = pick?.let { buildPoiLine(it, rider, statusColor(it.status)) }
             ?: context.getString(placeholderRes)
         views.setTextViewText(R.id.poi_text, mainText)
+
+        views.setViewVisibility(R.id.poi_stale_icon, if (showStaleIcon) View.VISIBLE else View.GONE)
 
         val hoursText = pick?.let { formatHours(it) }
         if (hoursText.isNullOrBlank()) {
