@@ -10,6 +10,18 @@
     android:paddingEnd="0dp"
     android:paddingBottom="1dp">
 
+    <!-- Back to the previous alternative (issue #208). Only visible once the category has a skip,
+         so an untouched tile keeps the full width for the name. -->
+    <ImageView
+        android:id="@+id/poi_back"
+        android:layout_width="40dp"
+        android:layout_height="match_parent"
+        android:minHeight="48dp"
+        android:scaleType="center"
+        android:contentDescription="@string/field_back_desc"
+        android:src="@drawable/ic_skip_previous"
+        android:visibility="gone" />
+
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
