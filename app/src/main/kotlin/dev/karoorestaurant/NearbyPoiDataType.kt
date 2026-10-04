@@ -38,6 +38,7 @@ class NearbyPoiDataType(
     typeId: String,
     private val routeFetchState: StateFlow<RouteFetchState> = MutableStateFlow(RouteFetchState.Idle),
     private val showClosedPois: StateFlow<Boolean> = MutableStateFlow(SettingsRepository.DEFAULT_SHOW_CLOSED_POIS),
+    private val skipped: StateFlow<Map<PoiCategory, Set<Long>>> = MutableStateFlow(emptyMap()),
 ) : DataTypeImpl(extension = RestaurantExtensionService.EXTENSION_ID, typeId = typeId) {
 
     override fun startView(context: Context, config: ViewConfig, emitter: ViewEmitter) {
@@ -61,9 +62,10 @@ class NearbyPoiDataType(
                 karoo.locationFlow.sample(SAMPLE_MS),
                 routeFetchState,
                 showClosedPois,
-            ) { rider, state, showClosed -> Triple(rider, state, showClosed) }.collect { (rider, state, showClosed) ->
+                skipped,
+            ) { rider, state, showClosed, skips -> TileInputs(rider, state, showClosed, skips) }.collect { (rider, state, showClosed, skips) ->
                 val pick = withContext(Dispatchers.IO) {
-                    tilePick(computeNearbyPicks(karoo, rider.point, showClosed), category)
+                    tilePick(computeNearbyPicks(karoo, rider.point, showClosed, skips), category)
                 }
                 emitter.updateView(
                     buildView(
@@ -101,11 +103,27 @@ class NearbyPoiDataType(
         }
 
         views.setOnClickPendingIntent(R.id.poi_root, pick?.let { buildLaunchPendingIntent(context, it.poi) })
+        views.setViewVisibility(R.id.poi_skip, if (pick != null) View.VISIBLE else View.GONE)
+        views.setOnClickPendingIntent(R.id.poi_skip, pick?.let { buildSkipPendingIntent(context, it) })
         return views
     }
 
-    private fun formatHours(pick: PoiNearby): String? =
-        if (pick.staleness == Staleness.AGING) "unverified" else null
+    private fun formatHours(pick: PoiNearby): String? = hoursLine(pick)
+
+    private fun buildSkipPendingIntent(context: Context, pick: PoiNearby): PendingIntent {
+        val intent = Intent(SkipPoiReceiver.ACTION).apply {
+            setClassName(context, SkipPoiReceiver::class.java.name)
+            putExtra(SkipPoiReceiver.EXTRA_OSM_ID, pick.poi.osmId)
+            putExtra(SkipPoiReceiver.EXTRA_CATEGORY, pick.poi.category.name)
+            putExtra(SkipPoiReceiver.EXTRA_WRAPPED, pick.wrapped)
+        }
+        return PendingIntent.getBroadcast(
+            context,
+            SKIP_REQUEST_CODE_BASE + category.ordinal,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+    }
 
     private fun statusColor(status: OpeningHours.Status?): Int = when (status) {
         OpeningHours.Status.Open -> COLOR_OPEN
@@ -188,7 +206,40 @@ class NearbyPoiDataType(
         const val TYPE_TRAIN_STATION = "nearby_train_station"
         const val TYPE_WATER_REFILL = "nearby_water_refill"
         private const val SAMPLE_MS = 10_000L
+
+        /** Keeps skip PendingIntents distinct from the navigate ones, which use the bare category ordinal. */
+        private const val SKIP_REQUEST_CODE_BASE = 100
     }
+}
+
+private data class TileInputs(
+    val rider: RiderLocation,
+    val state: RouteFetchState,
+    val showClosed: Boolean,
+    val skipped: Map<PoiCategory, Set<Long>>,
+)
+
+/**
+ * Secondary line under the POI name. Names the rank when the tile is showing an alternative after
+ * a skip (issue #63) and flags an aging cache entry as unverified; both when both apply.
+ */
+internal fun hoursLine(pick: PoiNearby): String? {
+    val parts = listOfNotNull(
+        if (pick.rank > 0) "${ordinal(pick.rank + 1)} nearest" else null,
+        if (pick.staleness == Staleness.AGING) "unverified" else null,
+    )
+    return parts.takeIf { it.isNotEmpty() }?.joinToString(" · ")
+}
+
+internal fun ordinal(n: Int): String {
+    val suffix = when {
+        n % 100 in 11..13 -> "th"
+        n % 10 == 1 -> "st"
+        n % 10 == 2 -> "nd"
+        n % 10 == 3 -> "rd"
+        else -> "th"
+    }
+    return "$n$suffix"
 }
 
 internal fun placeholderFor(state: RouteFetchState): Int =

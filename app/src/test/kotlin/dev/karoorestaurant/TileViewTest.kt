@@ -75,4 +75,28 @@ class TileViewTest {
         status = OpeningHours.Status.Unknown(reason = "test"),
         staleness = Staleness.NEW,
     )
+
+    // --- secondary line after a skip (issue #63) ---
+
+    @Test
+    fun `hoursLine is empty for the nearest fresh pick`() {
+        assertNull(hoursLine(nearby(PoiCategory.RESTAURANT, distanceMeters = 500.0)))
+    }
+
+    @Test
+    fun `hoursLine names the rank after a skip`() {
+        val pick = nearby(PoiCategory.RESTAURANT, distanceMeters = 500.0).copy(rank = 1)
+        assertEquals("2nd nearest", hoursLine(pick))
+    }
+
+    @Test
+    fun `hoursLine combines rank and unverified`() {
+        val pick = nearby(PoiCategory.RESTAURANT, distanceMeters = 500.0).copy(rank = 2, staleness = Staleness.AGING)
+        assertEquals("3rd nearest · unverified", hoursLine(pick))
+    }
+
+    @Test
+    fun `ordinal suffixes`() {
+        assertEquals(listOf("1st", "2nd", "3rd", "4th", "11th", "12th", "13th", "21st", "22nd"), listOf(1, 2, 3, 4, 11, 12, 13, 21, 22).map(::ordinal))
+    }
 }

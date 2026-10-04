@@ -31,7 +31,7 @@ Things discovered building Pitstop that are not obvious from the `karoo-ext` 1.1
 
 ## Tile rendering
 
-- **Data tiles use `RemoteViews`**, so layouts are limited to the subset Android exposes for cross-process inflation (`FrameLayout`, `LinearLayout`, `TextView`, `ImageView`, etc.). The Karoo Pages app does honor `setOnClickPendingIntent` on the root view (verified on hardware), so tiles can be made tappable.
+- **Data tiles use `RemoteViews`**, so layouts are limited to the subset Android exposes for cross-process inflation (`FrameLayout`, `LinearLayout`, `TextView`, `ImageView`, etc.). The Karoo Pages app does honor `setOnClickPendingIntent` on the root view (verified on hardware), so tiles can be made tappable. It also dispatches a `PendingIntent` set on a **child** view, with the root intent untouched (verified on hardware 2026-10-04 with the skip chevron, #63). Re-rendering after `updateView` takes on the order of a second or two, so a second tap in that window carries the previous extras; design receivers to be idempotent for a repeated payload.
 - **Hardcoded white text** on tiles is fine in practice — Karoo Pages renders data fields on dark backgrounds. There is no public theme attribute exposed to extensions to follow user theme choice.
 
 ## Debug-broadcast quirks

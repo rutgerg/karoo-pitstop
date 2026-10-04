@@ -3,50 +3,69 @@
     android:id="@+id/poi_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
+    android:orientation="horizontal"
     android:gravity="top"
     android:paddingTop="0dp"
     android:paddingStart="2dp"
-    android:paddingEnd="2dp"
+    android:paddingEnd="0dp"
     android:paddingBottom="1dp">
 
     <LinearLayout
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical">
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/poi_text"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="start|center_vertical"
+                android:includeFontPadding="false"
+                android:textSize="18sp"
+                android:textColor="#FFFFFFFF"
+                android:singleLine="true"
+                android:ellipsize="end" />
+
+            <ImageView
+                android:id="@+id/poi_stale_icon"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_marginStart="4dp"
+                android:contentDescription="@string/field_stale_cache_desc"
+                android:src="@drawable/ic_stale_cache"
+                android:visibility="gone" />
+        </LinearLayout>
 
         <TextView
-            android:id="@+id/poi_text"
-            android:layout_width="0dp"
+            android:id="@+id/poi_hours"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:gravity="start|center_vertical"
+            android:gravity="center"
             android:includeFontPadding="false"
-            android:textSize="18sp"
-            android:textColor="#FFFFFFFF"
+            android:textSize="12sp"
+            android:textColor="#FFCCCCCC"
             android:singleLine="true"
-            android:ellipsize="end" />
-
-        <ImageView
-            android:id="@+id/poi_stale_icon"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:layout_marginStart="4dp"
-            android:contentDescription="@string/field_stale_cache_desc"
-            android:src="@drawable/ic_stale_cache"
+            android:ellipsize="end"
             android:visibility="gone" />
     </LinearLayout>
 
-    <TextView
-        android:id="@+id/poi_hours"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:includeFontPadding="false"
-        android:textSize="12sp"
-        android:textColor="#FFCCCCCC"
-        android:singleLine="true"
-        android:ellipsize="end"
+    <!-- Skip to the next alternative (issue #63). Spans the full tile height so the tap target
+         stays tall on a small tile; the width is what it costs the name line. -->
+    <ImageView
+        android:id="@+id/poi_skip"
+        android:layout_width="40dp"
+        android:layout_height="match_parent"
+        android:minHeight="48dp"
+        android:scaleType="center"
+        android:contentDescription="@string/field_skip_desc"
+        android:src="@drawable/ic_skip_next"
         android:visibility="gone" />
 </LinearLayout>

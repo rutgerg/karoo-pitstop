@@ -41,6 +41,10 @@
             android:name=".LaunchPoiReceiver"
             android:exported="false" />
 
+        <receiver
+            android:name=".SkipPoiReceiver"
+            android:exported="false" />
+
         <service
             android:name=".RestaurantExtensionService"
             android:exported="true"

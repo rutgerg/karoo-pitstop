@@ -41,6 +41,7 @@ Pitstop is built for situations where the route is set but the next stop is unde
 3. `PeriodicRefresh` wakes every 20 minutes and re-queries a 10 km radius around the rider's latest known location, keeping the cache warm on off-route detours and multi-day rides. Fails silently when offline; succeeds whenever Wi-Fi is reachable.
 4. Eleven data field tiles (Restaurant, Supermarket, Fuel, Cafe, Hotel, Doctor, Pharmacy, Bike Shop, ATM, Train Station, Water Refill) on your ride profile page render the nearest non-closed POI per category, with distance, name, and the OSM `opening_hours` line. Closed entries are filtered out; Open and Unknown are both shown. While a fetch is pending recovery the tile shows **Waiting for Wi-Fi…**.
 5. Tap a tile → `LaunchPinDrop(Symbol.POI(...))` opens the Karoo's pin Activity → tap **Navigate** (replaces the active route) or **Save as POI** (bookmarks for later — no route change).
+6. Tap the **›|** chevron on the right edge of a tile to skip the shown POI (say, you arrived and it is shut) and advance to the next-nearest alternative. The tile then labels itself **2nd nearest**, **3rd nearest**, and so on. Skipping past the last candidate wraps back to the nearest. Skips are per category and reset whenever the planned route changes.
 
 ## Install
 
