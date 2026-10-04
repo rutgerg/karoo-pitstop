@@ -24,14 +24,25 @@ class SkipStore {
     val skipped: StateFlow<Map<PoiCategory, Set<Long>>> = _skipped.asStateFlow()
 
     /**
-     * Skip [osmId] for [category]. When [osmId] is already skipped the tile has wrapped around to
-     * it (every candidate was skipped), so a fresh cycle starts: only [osmId] stays skipped and
-     * the tile advances to the second-nearest again.
+     * Skip [osmId] for [category].
+     *
+     * [wrapped] says the tile was showing a wrapped pick (every candidate skipped, nearest shown
+     * again). Skipping that starts a fresh cycle: only [osmId] stays skipped, so the tile advances
+     * to the second-nearest again.
+     *
+     * Without [wrapped], an [osmId] that is already skipped is a stale repeat: the rider tapped
+     * again before the Karoo Pages app re-rendered the tile, so the chevron still carried the old
+     * id. Seen on hardware 2026-10-04 with taps 1.6 s apart. Treating it as a wrap would jump the
+     * tile backwards, so it is ignored.
      */
-    fun skip(category: PoiCategory, osmId: Long) {
+    fun skip(category: PoiCategory, osmId: Long, wrapped: Boolean = false) {
         _skipped.update { map ->
             val current = map[category].orEmpty()
-            val next = if (osmId in current) setOf(osmId) else current + osmId
+            val next = when {
+                wrapped -> setOf(osmId)
+                osmId in current -> return@update map
+                else -> current + osmId
+            }
             map + (category to next)
         }
     }

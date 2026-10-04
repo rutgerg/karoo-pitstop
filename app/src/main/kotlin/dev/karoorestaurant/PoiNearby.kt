@@ -10,4 +10,6 @@ data class PoiNearby(
     val staleness: Staleness = Staleness.NEW,
     /** 0 for the nearest eligible candidate, 1 for the next one after a skip, and so on. */
     val rank: Int = 0,
+    /** True when every eligible candidate was skipped and the pick wrapped back to the nearest. */
+    val wrapped: Boolean = false,
 )

@@ -7,6 +7,7 @@ import dev.karoorestaurant.data.route.LatLng
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class NearbyPicksTest {
@@ -107,10 +108,17 @@ class NearbyPicksTest {
     }
 
     @Test
-    fun `skipping every candidate wraps back to the nearest`() {
+    fun `skipping every candidate wraps back to the nearest and marks it wrapped`() {
         val pick = restaurantPick(threeOpen(), skipped = setOf(1L, 2L, 3L))
         assertEquals("Nearest", pick.poi.name)
         assertEquals(0, pick.rank)
+        assertTrue(pick.wrapped)
+    }
+
+    @Test
+    fun `an unwrapped pick is not marked wrapped`() {
+        assertFalse(restaurantPick(threeOpen(), skipped = setOf(1L)).wrapped)
+        assertFalse(restaurantPick(threeOpen(), skipped = emptySet()).wrapped)
     }
 
     @Test

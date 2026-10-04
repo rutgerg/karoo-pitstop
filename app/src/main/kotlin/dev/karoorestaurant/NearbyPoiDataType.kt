@@ -104,17 +104,18 @@ class NearbyPoiDataType(
 
         views.setOnClickPendingIntent(R.id.poi_root, pick?.let { buildLaunchPendingIntent(context, it.poi) })
         views.setViewVisibility(R.id.poi_skip, if (pick != null) View.VISIBLE else View.GONE)
-        views.setOnClickPendingIntent(R.id.poi_skip, pick?.let { buildSkipPendingIntent(context, it.poi) })
+        views.setOnClickPendingIntent(R.id.poi_skip, pick?.let { buildSkipPendingIntent(context, it) })
         return views
     }
 
     private fun formatHours(pick: PoiNearby): String? = hoursLine(pick)
 
-    private fun buildSkipPendingIntent(context: Context, poi: Poi): PendingIntent {
+    private fun buildSkipPendingIntent(context: Context, pick: PoiNearby): PendingIntent {
         val intent = Intent(SkipPoiReceiver.ACTION).apply {
             setClassName(context, SkipPoiReceiver::class.java.name)
-            putExtra(SkipPoiReceiver.EXTRA_OSM_ID, poi.osmId)
-            putExtra(SkipPoiReceiver.EXTRA_CATEGORY, poi.category.name)
+            putExtra(SkipPoiReceiver.EXTRA_OSM_ID, pick.poi.osmId)
+            putExtra(SkipPoiReceiver.EXTRA_CATEGORY, pick.poi.category.name)
+            putExtra(SkipPoiReceiver.EXTRA_WRAPPED, pick.wrapped)
         }
         return PendingIntent.getBroadcast(
             context,

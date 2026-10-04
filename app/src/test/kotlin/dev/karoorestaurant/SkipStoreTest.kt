@@ -29,7 +29,7 @@ class SkipStoreTest {
     }
 
     @Test
-    fun `skipping an already-skipped id starts a fresh cycle with only that id`() {
+    fun `skipping a wrapped pick starts a fresh cycle with only that id`() {
         // Every candidate skipped → tile wrapped back to the nearest (id 1). Skipping it again must
         // show the second-nearest, so only id 1 stays skipped.
         val store = SkipStore()
@@ -37,9 +37,22 @@ class SkipStoreTest {
         store.skip(PoiCategory.RESTAURANT, 2L)
         store.skip(PoiCategory.RESTAURANT, 3L)
 
-        store.skip(PoiCategory.RESTAURANT, 1L)
+        store.skip(PoiCategory.RESTAURANT, 1L, wrapped = true)
 
         assertEquals(setOf(1L), store.skipped.value[PoiCategory.RESTAURANT])
+    }
+
+    @Test
+    fun `a stale repeat tap for an already-skipped id is ignored`() {
+        // Hardware 2026-10-04: second chevron tap 1.6 s after the first still carried the old osm id
+        // because the tile had not re-rendered yet. It must not restart the cycle.
+        val store = SkipStore()
+        store.skip(PoiCategory.RESTAURANT, 1L)
+        store.skip(PoiCategory.RESTAURANT, 2L)
+
+        store.skip(PoiCategory.RESTAURANT, 2L)
+
+        assertEquals(setOf(1L, 2L), store.skipped.value[PoiCategory.RESTAURANT])
     }
 
     @Test

@@ -14,14 +14,16 @@ class SkipPoiReceiver : BroadcastReceiver() {
         val category = runCatching { PoiCategory.valueOf(categoryName) }.getOrNull() ?: return
         if (!intent.hasExtra(EXTRA_OSM_ID)) return
         val osmId = intent.getLongExtra(EXTRA_OSM_ID, 0L)
-        Log.i(TAG, "tile skip → $category osm $osmId")
-        app.skipStore.skip(category, osmId)
+        val wrapped = intent.getBooleanExtra(EXTRA_WRAPPED, false)
+        Log.i(TAG, "tile skip → $category osm $osmId wrapped=$wrapped")
+        app.skipStore.skip(category, osmId, wrapped)
     }
 
     companion object {
         const val ACTION = "dev.karoorestaurant.SKIP_POI"
         const val EXTRA_OSM_ID = "osm_id"
         const val EXTRA_CATEGORY = "category"
+        const val EXTRA_WRAPPED = "wrapped"
         private const val TAG = "SkipPoiRcvr"
     }
 }

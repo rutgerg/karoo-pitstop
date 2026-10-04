@@ -36,6 +36,6 @@ internal fun computeNearbyPicks(
             .mapIndexed { index, pick -> pick.copy(rank = index) }
             .toList()
         val skippedIds = skipped[category].orEmpty()
-        eligible.firstOrNull { it.poi.osmId !in skippedIds } ?: eligible.firstOrNull()
+        eligible.firstOrNull { it.poi.osmId !in skippedIds } ?: eligible.firstOrNull()?.copy(wrapped = true)
     }
 }
