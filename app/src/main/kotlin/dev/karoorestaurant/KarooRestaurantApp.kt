@@ -5,6 +5,10 @@ import dev.karoorestaurant.data.overpass.OverpassClient
 import dev.karoorestaurant.db.AndroidPoiStore
 import dev.karoorestaurant.settings.SettingsRepository
 import dev.karoorestaurant.telemetry.Telemetry
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.map
 
 class KarooRestaurantApp : Application() {
 
@@ -23,8 +27,13 @@ class KarooRestaurantApp : Application() {
     lateinit var fetchDiary: FetchDiary
         private set
 
-        lateinit var periodicRefresh: PeriodicRefresh
+    lateinit var periodicRefresh: PeriodicRefresh
         private set
+
+    lateinit var skipStore: SkipStore
+        private set
+
+    private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     override fun onCreate() {
         super.onCreate()
@@ -45,6 +54,8 @@ class KarooRestaurantApp : Application() {
         ).also { it.start() }
 
         periodicRefresh = PeriodicRefresh(karoo, diary = fetchDiary).also { it.start() }
+
+        skipStore = SkipStore().also { it.resetOnRouteChange(karoo.routeFlow.map { route -> route?.id }, appScope) }
 
         CacheStateNotifier(
             systemPort = systemPort,

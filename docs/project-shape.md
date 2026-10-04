@@ -12,6 +12,8 @@ karoo_restaurant/
 │       ├── NearbyPoiDataType.kt                      per-category data tile rendering distance + name + opening hours
 │       ├── NearbyPicks.kt                            shared compute for tile + Activity picker
 │       ├── LaunchPoiReceiver.kt                      tile-tap broadcast → KarooClient.navigateTo
+│       ├── SkipPoiReceiver.kt                        tile-chevron broadcast → SkipStore.skip
+│       ├── SkipStore.kt                              per-category skipped OSM ids; in-memory, cleared on route change
 │       ├── TestLocationReceiver.kt                   debug-only: inject a synthetic GPS location
 │       ├── SeedPoisReceiver.kt                       debug-only: populate the cache around a coordinate
 │       ├── MainActivity.kt                           Compose Settings screen; the only Activity, launched from Karoo Extensions → Pitstop → Open
@@ -21,7 +23,7 @@ karoo_restaurant/
 │       ├── db/{PoiStore,AndroidPoiStore}.kt          interface + SQLiteOpenHelper impl
 │       └── ui/Theme.kt
 │   └── src/main/res/
-│       ├── drawable/{ic_restaurant,ic_supermarket,ic_fuel,ic_cafe,ic_hotel,ic_doctor,ic_pharmacy,ic_bike_shop,ic_atm,ic_pitstop}.xml
+│       ├── drawable/{ic_restaurant,ic_supermarket,ic_fuel,ic_cafe,ic_hotel,ic_doctor,ic_pharmacy,ic_bike_shop,ic_atm,ic_pitstop,ic_stale_cache,ic_skip_next}.xml
 │       ├── layout/data_field_nearby_poi.xml         RemoteViews layout for the data tile
 │       └── xml/extension_info.xml                    extension metadata read by the Karoo system
 ├── data/                                             — Kotlin/JVM module

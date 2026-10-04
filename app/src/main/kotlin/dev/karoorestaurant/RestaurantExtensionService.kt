@@ -13,18 +13,19 @@ class RestaurantExtensionService : KarooExtension(EXTENSION_ID, BuildConfig.VERS
         val app = application as KarooRestaurantApp
         val state = app.routeWatcher.state
         val showClosed = app.settings.showClosedPois
+        val skipped = app.skipStore.skipped
         listOf(
-            NearbyPoiDataType(app.karoo, dev.karoorestaurant.data.poi.PoiCategory.RESTAURANT, NearbyPoiDataType.TYPE_RESTAURANT, state, showClosed),
-            NearbyPoiDataType(app.karoo, dev.karoorestaurant.data.poi.PoiCategory.SUPERMARKET, NearbyPoiDataType.TYPE_SUPERMARKET, state, showClosed),
-            NearbyPoiDataType(app.karoo, dev.karoorestaurant.data.poi.PoiCategory.FUEL, NearbyPoiDataType.TYPE_FUEL, state, showClosed),
-            NearbyPoiDataType(app.karoo, dev.karoorestaurant.data.poi.PoiCategory.CAFE, NearbyPoiDataType.TYPE_CAFE, state, showClosed),
-            NearbyPoiDataType(app.karoo, dev.karoorestaurant.data.poi.PoiCategory.HOTEL, NearbyPoiDataType.TYPE_HOTEL, state, showClosed),
-            NearbyPoiDataType(app.karoo, dev.karoorestaurant.data.poi.PoiCategory.DOCTOR, NearbyPoiDataType.TYPE_DOCTOR, state, showClosed),
-            NearbyPoiDataType(app.karoo, dev.karoorestaurant.data.poi.PoiCategory.PHARMACY, NearbyPoiDataType.TYPE_PHARMACY, state, showClosed),
-            NearbyPoiDataType(app.karoo, dev.karoorestaurant.data.poi.PoiCategory.BIKE_SHOP, NearbyPoiDataType.TYPE_BIKE_SHOP, state, showClosed),
-            NearbyPoiDataType(app.karoo, dev.karoorestaurant.data.poi.PoiCategory.ATM, NearbyPoiDataType.TYPE_ATM, state, showClosed),
-            NearbyPoiDataType(app.karoo, dev.karoorestaurant.data.poi.PoiCategory.TRAIN_STATION, NearbyPoiDataType.TYPE_TRAIN_STATION, state, showClosed),
-            NearbyPoiDataType(app.karoo, dev.karoorestaurant.data.poi.PoiCategory.WATER_REFILL, NearbyPoiDataType.TYPE_WATER_REFILL, state, showClosed),
+            NearbyPoiDataType(app.karoo, dev.karoorestaurant.data.poi.PoiCategory.RESTAURANT, NearbyPoiDataType.TYPE_RESTAURANT, state, showClosed, skipped),
+            NearbyPoiDataType(app.karoo, dev.karoorestaurant.data.poi.PoiCategory.SUPERMARKET, NearbyPoiDataType.TYPE_SUPERMARKET, state, showClosed, skipped),
+            NearbyPoiDataType(app.karoo, dev.karoorestaurant.data.poi.PoiCategory.FUEL, NearbyPoiDataType.TYPE_FUEL, state, showClosed, skipped),
+            NearbyPoiDataType(app.karoo, dev.karoorestaurant.data.poi.PoiCategory.CAFE, NearbyPoiDataType.TYPE_CAFE, state, showClosed, skipped),
+            NearbyPoiDataType(app.karoo, dev.karoorestaurant.data.poi.PoiCategory.HOTEL, NearbyPoiDataType.TYPE_HOTEL, state, showClosed, skipped),
+            NearbyPoiDataType(app.karoo, dev.karoorestaurant.data.poi.PoiCategory.DOCTOR, NearbyPoiDataType.TYPE_DOCTOR, state, showClosed, skipped),
+            NearbyPoiDataType(app.karoo, dev.karoorestaurant.data.poi.PoiCategory.PHARMACY, NearbyPoiDataType.TYPE_PHARMACY, state, showClosed, skipped),
+            NearbyPoiDataType(app.karoo, dev.karoorestaurant.data.poi.PoiCategory.BIKE_SHOP, NearbyPoiDataType.TYPE_BIKE_SHOP, state, showClosed, skipped),
+            NearbyPoiDataType(app.karoo, dev.karoorestaurant.data.poi.PoiCategory.ATM, NearbyPoiDataType.TYPE_ATM, state, showClosed, skipped),
+            NearbyPoiDataType(app.karoo, dev.karoorestaurant.data.poi.PoiCategory.TRAIN_STATION, NearbyPoiDataType.TYPE_TRAIN_STATION, state, showClosed, skipped),
+            NearbyPoiDataType(app.karoo, dev.karoorestaurant.data.poi.PoiCategory.WATER_REFILL, NearbyPoiDataType.TYPE_WATER_REFILL, state, showClosed, skipped),
         )
     }
 
