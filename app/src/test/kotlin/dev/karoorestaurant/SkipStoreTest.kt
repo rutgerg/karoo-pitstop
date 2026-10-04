@@ -56,6 +56,58 @@ class SkipStoreTest {
     }
 
     @Test
+    fun `unskip undoes skips most recent first`() {
+        val store = SkipStore()
+        store.skip(PoiCategory.RESTAURANT, 1L)
+        store.skip(PoiCategory.RESTAURANT, 2L)
+        store.skip(PoiCategory.CAFE, 9L)
+
+        store.unskip(PoiCategory.RESTAURANT, 2L)
+        assertEquals(setOf(1L), store.skipped.value[PoiCategory.RESTAURANT])
+
+        store.unskip(PoiCategory.RESTAURANT, 1L)
+        assertTrue(store.skipped.value[PoiCategory.RESTAURANT].orEmpty().isEmpty())
+        assertEquals(setOf(9L), store.skipped.value[PoiCategory.CAFE], "other categories untouched")
+    }
+
+    @Test
+    fun `a stale repeat back tap does not undo a second skip`() {
+        // Two back taps before the tile re-renders both carry id 2. Only the first may count.
+        val store = SkipStore()
+        store.skip(PoiCategory.RESTAURANT, 1L)
+        store.skip(PoiCategory.RESTAURANT, 2L)
+
+        store.unskip(PoiCategory.RESTAURANT, 2L)
+        store.unskip(PoiCategory.RESTAURANT, 2L)
+
+        assertEquals(setOf(1L), store.skipped.value[PoiCategory.RESTAURANT])
+    }
+
+    @Test
+    fun `unskip of an id that is not the most recent skip is ignored`() {
+        val store = SkipStore()
+        store.skip(PoiCategory.RESTAURANT, 1L)
+        store.skip(PoiCategory.RESTAURANT, 2L)
+
+        store.unskip(PoiCategory.RESTAURANT, 1L)
+
+        assertEquals(listOf(1L, 2L), store.skipped.value[PoiCategory.RESTAURANT]?.toList())
+    }
+
+    @Test
+    fun `back from a wrapped pick returns to the last alternative`() {
+        // Skipped 1, 2, 3 → tile wrapped to the nearest (1). Back must show 3 again, i.e. unskip 3.
+        val store = SkipStore()
+        store.skip(PoiCategory.RESTAURANT, 1L)
+        store.skip(PoiCategory.RESTAURANT, 2L)
+        store.skip(PoiCategory.RESTAURANT, 3L)
+
+        store.unskip(PoiCategory.RESTAURANT, store.skipped.value[PoiCategory.RESTAURANT]!!.last())
+
+        assertEquals(listOf(1L, 2L), store.skipped.value[PoiCategory.RESTAURANT]?.toList())
+    }
+
+    @Test
     fun `clear drops every category`() {
         val store = SkipStore()
         store.skip(PoiCategory.RESTAURANT, 1L)

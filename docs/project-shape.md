@@ -12,7 +12,7 @@ karoo_restaurant/
 │       ├── NearbyPoiDataType.kt                      per-category data tile rendering distance + name + opening hours
 │       ├── NearbyPicks.kt                            shared compute for tile + Activity picker
 │       ├── LaunchPoiReceiver.kt                      tile-tap broadcast → KarooClient.navigateTo
-│       ├── SkipPoiReceiver.kt                        tile-chevron broadcast → SkipStore.skip
+│       ├── SkipPoiReceiver.kt                        tile-chevron broadcasts → SkipStore.skip / unskip
 │       ├── SkipStore.kt                              per-category skipped OSM ids; in-memory, cleared on route change
 │       ├── TestLocationReceiver.kt                   debug-only: inject a synthetic GPS location
 │       ├── SeedPoisReceiver.kt                       debug-only: populate the cache around a coordinate

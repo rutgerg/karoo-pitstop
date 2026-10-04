@@ -47,6 +47,21 @@ class SkipStore {
         }
     }
 
+    /**
+     * Undo the most recent skip for [category]: the back chevron.
+     *
+     * [osmId] is the id the tile offered to undo when it rendered. It is removed only while it is
+     * still the most recent skip, so a stale repeat tap does not undo a second one. Relies on the
+     * skipped sets keeping insertion order, which Kotlin's default sets do.
+     */
+    fun unskip(category: PoiCategory, osmId: Long) {
+        _skipped.update { map ->
+            val current = map[category].orEmpty()
+            if (current.lastOrNull() != osmId) return@update map
+            map + (category to current - osmId)
+        }
+    }
+
     fun clear() {
         _skipped.value = emptyMap()
     }

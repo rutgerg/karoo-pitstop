@@ -74,6 +74,7 @@ class NearbyPoiDataType(
                         rider = rider,
                         placeholderRes = placeholderFor(state),
                         showStaleIcon = pick != null && state !is RouteFetchState.Cached,
+                        backOsmId = skips[category]?.lastOrNull(),
                     ),
                 )
             }
@@ -86,6 +87,7 @@ class NearbyPoiDataType(
         rider: RiderLocation?,
         placeholderRes: Int,
         showStaleIcon: Boolean,
+        backOsmId: Long? = null,
     ): RemoteViews {
         val views = RemoteViews(context.packageName, R.layout.data_field_nearby_poi)
         val mainText = pick?.let { buildPoiLine(it, rider, statusColor(it.status)) }
@@ -105,7 +107,24 @@ class NearbyPoiDataType(
         views.setOnClickPendingIntent(R.id.poi_root, pick?.let { buildLaunchPendingIntent(context, it.poi) })
         views.setViewVisibility(R.id.poi_skip, if (pick != null) View.VISIBLE else View.GONE)
         views.setOnClickPendingIntent(R.id.poi_skip, pick?.let { buildSkipPendingIntent(context, it) })
+        val showBack = pick != null && backOsmId != null
+        views.setViewVisibility(R.id.poi_back, if (showBack) View.VISIBLE else View.GONE)
+        views.setOnClickPendingIntent(R.id.poi_back, backOsmId?.takeIf { showBack }?.let { buildBackPendingIntent(context, it) })
         return views
+    }
+
+    private fun buildBackPendingIntent(context: Context, osmId: Long): PendingIntent {
+        val intent = Intent(SkipPoiReceiver.ACTION_BACK).apply {
+            setClassName(context, SkipPoiReceiver::class.java.name)
+            putExtra(SkipPoiReceiver.EXTRA_OSM_ID, osmId)
+            putExtra(SkipPoiReceiver.EXTRA_CATEGORY, category.name)
+        }
+        return PendingIntent.getBroadcast(
+            context,
+            BACK_REQUEST_CODE_BASE + category.ordinal,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
     }
 
     private fun formatHours(pick: PoiNearby): String? = hoursLine(pick)
@@ -209,6 +228,9 @@ class NearbyPoiDataType(
 
         /** Keeps skip PendingIntents distinct from the navigate ones, which use the bare category ordinal. */
         private const val SKIP_REQUEST_CODE_BASE = 100
+
+        /** Same for the back chevron; categories stay well under 100, so the ranges never overlap. */
+        private const val BACK_REQUEST_CODE_BASE = 200
     }
 }
 
