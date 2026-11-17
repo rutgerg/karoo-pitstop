@@ -69,6 +69,11 @@ jobs:
       - name: Attach APK and manifest to release
         uses: softprops/action-gh-release@v3
         with:
+          # A tag with a suffix (v1.7.0-rc.1) is a prerelease: never marked
+          # Latest, so releases/latest and the README link keep serving the
+          # last stable build.
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          make_latest: ${{ !contains(github.ref_name, '-') }}
           files: |
             pitstop.apk
             manifest.json
