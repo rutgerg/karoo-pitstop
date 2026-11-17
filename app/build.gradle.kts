@@ -117,7 +117,7 @@ dependencies {
         exclude(group = "org.xerial", module = "sqlite-jdbc")
     }
 
-    implementation("io.hammerhead:karoo-ext:1.1.8")
+    implementation("io.hammerhead:karoo-ext:1.1.9")
 
     val composeBom = platform("androidx.compose:compose-bom:2024.10.00")
     implementation(composeBom)

@@ -63,7 +63,7 @@ Only needed to modify Pitstop or run it on the Pixel emulator. End users should 
 
 ### Prerequisites
 
-- Android Studio Koala (or newer) — manages the JDK, gradle wrapper, AGP.
+- An Android Studio release that supports AGP 9.4 (verified on 2026.2). It manages the JDK, gradle wrapper and AGP.
 - A GitHub Personal Access Token with the `read:packages` scope. The `karoo-ext` SDK is published only to GitHub Packages, which **requires authentication even for public reads**.
 
 ### Setup
