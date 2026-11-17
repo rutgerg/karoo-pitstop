@@ -1,6 +1,13 @@
 # Release notes
 
-User-facing notes per `vX.Y.Z` release. The release workflow extracts the section matching the current tag and pipes it into the Karoo App Manifest as `releaseNotes`, where it appears in the Karoo extension About panel. Add a new `## X.Y.Z` section at the top before tagging.
+User-facing notes per `vX.Y.Z` release. The release workflow extracts the section matching the current tag and pipes it into the Karoo App Manifest as `releaseNotes`, where it appears in the Karoo extension About panel. Add a new `## X.Y.Z` section at the top before tagging. A release candidate tag such as `v1.7.0-rc.1` needs its own `## 1.7.0-rc.1` section and is published as a prerelease.
+
+## 1.7.0-rc.1
+
+- Tap the chevron on the right edge of a tile to skip the shown POI, for example when you arrive and it turns out to be closed. The tile advances to the next-nearest alternative and labels it 2nd nearest, 3rd nearest, and so on. Skipping past the last one wraps back to the nearest.
+- Once you have skipped, a chevron appears on the left edge of the tile. Tap it to go back to the previously shown POI. Skips reset whenever the planned route changes.
+- A small orange warning icon now appears next to the POI name when the tile is showing POIs left over from an earlier ride because the current route could not be fetched yet.
+- Updated build tooling and libraries. No change in behavior.
 
 ## 1.6.1
 
