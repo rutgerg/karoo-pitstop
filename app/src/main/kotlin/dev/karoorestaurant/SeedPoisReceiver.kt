@@ -40,16 +40,19 @@ class SeedPoisReceiver : BroadcastReceiver() {
             }
         }
 
+        // No goAsync(): an Overpass fetch can take up to 120 s (read timeout),
+        // past Android's 60 s background-broadcast limit, which raised an ANR
+        // (#212). The broadcast returns at once and the fetch runs on in the
+        // app process. The "started" line makes a fetch that never logs a
+        // result visible instead of silent.
         val karooApp = app as KarooRestaurantApp
-        val pendingResult = goAsync()
+        Log.i(TAG, "SEED_POIS started around ($lat, $lon) r=${radius}m categories=${categories ?: "all"}")
         CoroutineScope(Dispatchers.IO + SupervisorJob()).launch {
             try {
                 val n = karooApp.karoo.refreshAround(LatLng(lat, lon), radius, categories)
                 Log.i(TAG, "SEED_POIS cached $n POIs around ($lat, $lon) r=${radius}m categories=${categories ?: "all"}")
             } catch (t: Throwable) {
                 Log.e(TAG, "SEED_POIS failed: ${t.message}", t)
-            } finally {
-                pendingResult.finish()
             }
         }
     }
